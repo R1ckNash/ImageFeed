@@ -21,6 +21,7 @@ final class ProfileViewController: UIViewController {
     @IBAction private func didTapLogoutButton(_ sender: Any) {
     }
     
+    //MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
