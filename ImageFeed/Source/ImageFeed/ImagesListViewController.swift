@@ -43,6 +43,7 @@ final class ImagesListViewController: UIViewController {
 
 }
 
+//MARK: - Extensions
 extension ImagesListViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
