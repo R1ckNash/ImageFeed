@@ -82,7 +82,7 @@ extension ProfileViewController {
     private func configureLoginNameLabel() {
         loginNameLabel.translatesAutoresizingMaskIntoConstraints = false
         loginNameLabel.text = "@ekaterina_nov"
-        loginNameLabel.font.withSize(13)
+        loginNameLabel.font = .systemFont(ofSize: 13)
         loginNameLabel.textColor = .ypGray
         
         NSLayoutConstraint.activate([
@@ -94,7 +94,7 @@ extension ProfileViewController {
     private func configureDescriptionLabel() {
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         descriptionLabel.text = "Hello, world!"
-        descriptionLabel.font.withSize(13)
+        descriptionLabel.font = .systemFont(ofSize: 13)
         descriptionLabel.textColor = .white
         
         NSLayoutConstraint.activate([
@@ -105,12 +105,11 @@ extension ProfileViewController {
     
     private func configureLogoutButton() {
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
-        logoutButton.setImage(UIImage(systemName: "ipad.and.arrow.forward"), for: .normal)
-        logoutButton.tintColor = .ypRed
+        logoutButton.setImage(UIImage(imageLiteralResourceName: "logout_button"), for: .normal)
         
         NSLayoutConstraint.activate([
-            logoutButton.heightAnchor.constraint(equalToConstant: 44),
-            logoutButton.widthAnchor.constraint(equalToConstant: 44),
+            logoutButton.heightAnchor.constraint(equalToConstant: 24),
+            logoutButton.widthAnchor.constraint(equalToConstant: 24),
             view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: logoutButton.trailingAnchor, constant: 16),
             logoutButton.centerYAnchor.constraint(equalTo: avatarImageview.centerYAnchor)
         ])
