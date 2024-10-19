@@ -130,18 +130,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oFY-sy-Ocj" userLabel="Sharing Button">
-                                <rect key="frame" x="171" y="784" width="51" height="51"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="51" id="LfZ-dl-uXF"/>
-                                    <constraint firstAttribute="width" constant="51" id="hec-1D-7n9"/>
-                                </constraints>
-                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                                <state key="normal" image="sharing_button"/>
-                                <connections>
-                                    <action selector="didTapShareButton:" destination="Q2T-du-fCd" eventType="touchUpInside" id="pEd-No-7ia"/>
-                                </connections>
-                            </button>
                             <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="DNZ-bu-yJQ">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                                 <subviews>
@@ -161,6 +149,18 @@
                                     <outlet property="delegate" destination="Q2T-du-fCd" id="cA9-ZD-w8M"/>
                                 </connections>
                             </scrollView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oFY-sy-Ocj" userLabel="Sharing Button">
+                                <rect key="frame" x="171" y="784" width="51" height="51"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="51" id="LfZ-dl-uXF"/>
+                                    <constraint firstAttribute="width" constant="51" id="hec-1D-7n9"/>
+                                </constraints>
+                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                <state key="normal" image="sharing_button"/>
+                                <connections>
+                                    <action selector="didTapShareButton:" destination="Q2T-du-fCd" eventType="touchUpInside" id="pEd-No-7ia"/>
+                                </connections>
+                            </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5LZ-jb-J3A">
                                 <rect key="frame" x="16" y="91" width="24" height="24"/>
                                 <constraints>

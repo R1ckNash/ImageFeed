@@ -108,8 +108,8 @@ extension ProfileViewController {
         logoutButton.setImage(UIImage(imageLiteralResourceName: "logout_button"), for: .normal)
         
         NSLayoutConstraint.activate([
-            logoutButton.heightAnchor.constraint(equalToConstant: 24),
-            logoutButton.widthAnchor.constraint(equalToConstant: 24),
+            logoutButton.heightAnchor.constraint(equalToConstant: 44),
+            logoutButton.widthAnchor.constraint(equalToConstant: 44),
             view.safeAreaLayoutGuide.trailingAnchor.constraint(equalTo: logoutButton.trailingAnchor, constant: 16),
             logoutButton.centerYAnchor.constraint(equalTo: avatarImageview.centerYAnchor)
         ])
