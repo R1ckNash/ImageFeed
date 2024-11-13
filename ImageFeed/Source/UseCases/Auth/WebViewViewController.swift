@@ -82,6 +82,7 @@ final class WebViewViewController: UIViewController {
     //MARK: - Private methods
     private func configureUI() {
         
+        view.backgroundColor = .white
         view.addSubview(webView)
         view.addSubview(backButton)
         view.addSubview(progressView)
@@ -129,7 +130,7 @@ final class WebViewViewController: UIViewController {
     }
     
     private func updateProgress() {
-        progressView.progress = Float(webView.estimatedProgress)
+        progressView.setProgress(Float(webView.estimatedProgress), animated: true)
         progressView.isHidden = fabs(webView.estimatedProgress - 1.0) <= 0.0001
     }
     

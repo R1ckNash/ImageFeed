@@ -8,7 +8,7 @@
 import UIKit
 
 protocol AuthViewControllerDelegate: AnyObject {
-    func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String)
+    func switchToTabBarController()
 }
 
 final class AuthViewController: UIViewController {
@@ -70,7 +70,7 @@ final class AuthViewController: UIViewController {
     }
     
     @objc private func loginButtonTapped () {
-        performSegue(withIdentifier: "ShowWebView", sender: nil)
+        performSegue(withIdentifier: showWebViewSegueIdentifier, sender: nil)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -91,7 +91,16 @@ final class AuthViewController: UIViewController {
 extension AuthViewController: WebViewViewControllerDelegate {
     
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        delegate?.authViewController(self, didAuthenticateWithCode: code)
+        
+        oauth2Service.fetchOAuthToken(code) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+                self.delegate?.switchToTabBarController()
+            case .failure:
+                break
+            }
+        }
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
