@@ -13,10 +13,10 @@ final class SingleImageViewController: UIViewController {
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var scrollView: UIScrollView!
     
-    //MARK: - Properties
+    //MARK: - Visual Components
     private var image: UIImage?
     
-    //MARK: - Lifecycle
+    //MARK: - SingleImageViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -27,6 +27,11 @@ final class SingleImageViewController: UIViewController {
         imageView.image = image
         imageView.frame.size = image.size
         rescaleAndCenterImageInScrollView(image: image)
+    }
+    
+    //MARK: - Public methods
+    func setImage(_ image: UIImage?) {
+        self.image = image
     }
     
     //MARK: - IBActions
@@ -43,12 +48,7 @@ final class SingleImageViewController: UIViewController {
         present(share, animated: true, completion: nil)
     }
     
-    
-    //MARK: - Public methods
-    func setImage(_ image: UIImage?) {
-        self.image = image
-    }
-    
+    //MARK: - Private Methods
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
         
         let minZoomScale = scrollView.minimumZoomScale
@@ -78,7 +78,7 @@ final class SingleImageViewController: UIViewController {
 
 }
 
-//MARK: - Extensions
+//MARK: - UIScrollViewDelegate
 extension SingleImageViewController: UIScrollViewDelegate {
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {

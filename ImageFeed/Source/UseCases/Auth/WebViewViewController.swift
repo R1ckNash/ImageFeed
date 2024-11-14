@@ -20,10 +20,7 @@ protocol WebViewViewControllerDelegate: AnyObject {
 
 final class WebViewViewController: UIViewController {
     
-    //MARK: - Properties
-    weak var delegate: WebViewViewControllerDelegate?
-    
-    //MARK: - UI Elements
+    //MARK: - Visual Components
     private lazy var webView: WKWebView = {
         let webView = WKWebView()
         webView.backgroundColor = .white
@@ -50,8 +47,10 @@ final class WebViewViewController: UIViewController {
         return progressView
     }()
     
+    //MARK: - Public Properties
+    weak var delegate: WebViewViewControllerDelegate?
 
-    //MARK: - Lifecycle
+    //MARK: - WebViewViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -79,7 +78,20 @@ final class WebViewViewController: UIViewController {
         webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
     }
     
-    //MARK: - Private methods
+    //MARK: - Public Methods
+    override func observeValue(
+        forKeyPath keyPath: String?,
+        of object: Any?,
+        change: [NSKeyValueChangeKey : Any]?,
+        context: UnsafeMutableRawPointer?) {
+        if keyPath == #keyPath(WKWebView.estimatedProgress) {
+            updateProgress()
+        } else {
+            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+        }
+    }
+    
+    //MARK: - Private Methods
     private func configureUI() {
         
         view.backgroundColor = .white
@@ -138,35 +150,6 @@ final class WebViewViewController: UIViewController {
         dismiss(animated: true)
     }
     
-    override func observeValue(
-        forKeyPath keyPath: String?,
-        of object: Any?,
-        change: [NSKeyValueChangeKey : Any]?,
-        context: UnsafeMutableRawPointer?) {
-        if keyPath == #keyPath(WKWebView.estimatedProgress) {
-            updateProgress()
-        } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-        }
-    }
-
-}
-
-//MARK: - Extensions
-extension WebViewViewController: WKNavigationDelegate {
-    
-    func webView(_ webView: WKWebView,
-                 decidePolicyFor navigationAction: WKNavigationAction,
-                 decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
-        
-        if let code = code(from: navigationAction) {
-            delegate?.webViewViewController(self, didAuthenticateWithCode: code)
-            decisionHandler(.cancel)
-        } else {
-            decisionHandler(.allow)
-        }
-    }
-    
     private func code(from navigationAction: WKNavigationAction) -> String? {
         if
             let url = navigationAction.request.url,
@@ -178,6 +161,23 @@ extension WebViewViewController: WKNavigationDelegate {
             return codeItem.value
         } else {
             return nil
+        }
+    }
+
+}
+
+//MARK: - WKNavigationDelegate
+extension WebViewViewController: WKNavigationDelegate {
+    
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
+        
+        if let code = code(from: navigationAction) {
+            delegate?.webViewViewController(self, didAuthenticateWithCode: code)
+            decisionHandler(.cancel)
+        } else {
+            decisionHandler(.allow)
         }
     }
     

@@ -9,13 +9,7 @@ import Foundation
 
 final class OAuth2TokenStorage {
     
-    //MARK: - Properties
-    private let userDefaults = UserDefaults.standard
-    
-    private enum Keys: String {
-        case bearerToken
-    }
-    
+    //MARK: - Public Properties
     var token: String? {
         get {
             return userDefaults.string(forKey: Keys.bearerToken.rawValue)
@@ -24,4 +18,12 @@ final class OAuth2TokenStorage {
             userDefaults.set(newValue, forKey: Keys.bearerToken.rawValue)
         }
     }
+    
+    //MARK: - Private Properties
+    private let userDefaults = UserDefaults.standard
+    
+    private enum Keys: String {
+        case bearerToken
+    }
+    
 }

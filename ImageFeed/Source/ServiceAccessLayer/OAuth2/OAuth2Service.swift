@@ -9,19 +9,21 @@ import Foundation
 
 final class OAuth2Service {
     
-    //MARK: - Properties
+    //MARK: - Public Properties
     static let shared = OAuth2Service()
+    
+    //MARK: - Private Properties
     private let tokenStorage: OAuth2TokenStorage
     private let decoder: JSONDecoder
     
-    //MARK: - Lifecycle
+    //MARK: - Initializers
     private init() {
         tokenStorage = OAuth2TokenStorage()
         decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
     }
     
-    //MARK: - Public methods
+    //MARK: - Public Methods
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
         
         guard let request = makeOAuthTokenRequest(code: code) else {

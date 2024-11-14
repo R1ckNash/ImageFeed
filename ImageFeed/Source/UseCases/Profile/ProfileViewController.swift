@@ -9,15 +9,14 @@ import UIKit
 
 final class ProfileViewController: UIViewController {
     
-    //MARK: - UI
+    //MARK: - Visual Components
     private let avatarImageview = UIImageView()
     private let nameLabel = UILabel()
     private let loginNameLabel = UILabel()
     private let descriptionLabel = UILabel()
-    
     private let logoutButton = UIButton()
     
-    //MARK: - Lifecycle
+    //MARK: - ProfileViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -28,11 +27,6 @@ final class ProfileViewController: UIViewController {
     private func didTapLogoutButton() {
         
     }
-    
-}
-
-//MARK: - Configure UI
-extension ProfileViewController {
     
     private func configureUI() {
         

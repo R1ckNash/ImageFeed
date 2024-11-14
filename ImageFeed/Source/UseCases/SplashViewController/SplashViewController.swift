@@ -9,14 +9,12 @@ import UIKit
 
 final class SplashViewController: UIViewController {
     
-    //MARK: - Properties
+    //MARK: - Private Properties
     private let ShowAuthenticationScreenSegueIdentifier = "ShowAuthenticationScreen"
-
     private let oauth2Service = OAuth2Service.shared
     private let oauth2TokenStorage = OAuth2TokenStorage()
-
-    //MARK: - Life cycle
     
+    //MARK: - SplashViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -46,15 +44,11 @@ final class SplashViewController: UIViewController {
         super.viewWillAppear(animated)
         setNeedsStatusBarAppearanceUpdate()
     }
-
+    
+    //MARK: - Public Methods
     override var preferredStatusBarStyle: UIStatusBarStyle {
         .lightContent
     }
-
-}
-
-//MARK: - Extensions
-extension SplashViewController {
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == ShowAuthenticationScreenSegueIdentifier {
@@ -67,15 +61,37 @@ extension SplashViewController {
             super.prepare(for: segue, sender: sender)
         }
     }
-}
-
-extension SplashViewController: AuthViewControllerDelegate {
     
-    func switchToTabBarController() {
+    //MARK: - Private Methods
+    private func switchToTabBarController() {
         guard let window = UIApplication.shared.windows.first else { fatalError("Invalid Configuration") }
         let tabBarController = UIStoryboard(name: "Main", bundle: .main)
             .instantiateViewController(withIdentifier: "TabBarViewController")
         window.rootViewController = tabBarController
+    }
+    
+    private func fetchOAuthToken(_ code: String) {
+        oauth2Service.fetchOAuthToken(code) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+                self.switchToTabBarController()
+            case .failure:
+                break
+            }
+        }
+    }
+    
+}
+
+//MARK: - AuthViewControllerDelegate
+extension SplashViewController: AuthViewControllerDelegate {
+    
+    func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
+        dismiss(animated: true) { [weak self] in
+            guard let self else { return }
+            self.fetchOAuthToken(code)
+        }
     }
     
 }

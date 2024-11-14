@@ -8,18 +8,12 @@
 import UIKit
 
 protocol AuthViewControllerDelegate: AnyObject {
-    func switchToTabBarController()
+    func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String)
 }
 
 final class AuthViewController: UIViewController {
     
-    //MARK: - Properties
-    private let showWebViewSegueIdentifier = "ShowWebView"
-    private let oauth2Service = OAuth2Service.shared
-    
-    weak var delegate: AuthViewControllerDelegate?
-    
-    //MARK: - UI Elements
+    //MARK: - Visual Components
     private lazy var logoImageView: UIImageView = {
         let imageView = UIImageView(image: .init(named: "unsplash_logo"))
         imageView.contentMode = .scaleAspectFit
@@ -40,6 +34,13 @@ final class AuthViewController: UIViewController {
         
         return button
     }()
+    
+    //MARK: - Public Properties
+    weak var delegate: AuthViewControllerDelegate?
+    
+    //MARK: - Private Properties
+    private let showWebViewSegueIdentifier = "ShowWebView"
+    private let oauth2Service = OAuth2Service.shared
 
     //MARK: - Lifecycle
     override func viewDidLoad() {
@@ -48,7 +49,21 @@ final class AuthViewController: UIViewController {
         configureUI()
     }
     
-    //MARK: - Private methods
+    //MARK: - Public Methods
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == showWebViewSegueIdentifier {
+            guard let webViewViewController = segue.destination as? WebViewViewController
+            else {
+                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
+                return
+            }
+            webViewViewController.delegate = self
+        } else {
+            super.prepare(for: segue, sender: sender)
+        }
+    }
+    
+    //MARK: - Private Methods
     private func configureUI() {
         view.backgroundColor = .ypBlack
         
@@ -72,35 +87,14 @@ final class AuthViewController: UIViewController {
     @objc private func loginButtonTapped () {
         performSegue(withIdentifier: showWebViewSegueIdentifier, sender: nil)
     }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showWebViewSegueIdentifier {
-            guard let webViewViewController = segue.destination as? WebViewViewController
-            else {
-                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
-                return
-            }
-            webViewViewController.delegate = self
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
-    }
 
 }
 
+//MARK: - WebViewViewControllerDelegate
 extension AuthViewController: WebViewViewControllerDelegate {
     
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        
-        oauth2Service.fetchOAuthToken(code) { [weak self] result in
-            guard let self else { return }
-            switch result {
-            case .success:
-                self.delegate?.switchToTabBarController()
-            case .failure:
-                break
-            }
-        }
+        delegate?.authViewController(self, didAuthenticateWithCode: code)
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
