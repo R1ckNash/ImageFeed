@@ -12,6 +12,7 @@ final class SplashViewController: UIViewController {
     //MARK: - Private Properties
     private let ShowAuthenticationScreenSegueIdentifier = "ShowAuthenticationScreen"
     private let oauth2Service = OAuth2Service.shared
+    private let profileService = ProfileService.shared
     private let oauth2TokenStorage = OAuth2TokenStorage()
     
     //MARK: - SplashViewController
@@ -33,8 +34,8 @@ final class SplashViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if oauth2TokenStorage.token != nil {
-            switchToTabBarController()
+        if let token = oauth2TokenStorage.token {
+            self.fetchProfile(token)
         } else {
             performSegue(withIdentifier: ShowAuthenticationScreenSegueIdentifier, sender: nil)
         }
@@ -74,18 +75,18 @@ final class SplashViewController: UIViewController {
         window.rootViewController = tabBarController
     }
     
-    private func fetchOAuthToken(_ code: String) {
-        oauth2Service.fetchOAuthToken(code) { [weak self] result in
-            guard let self else { return }
+    private func fetchProfile(_ token: String) {
+        profileService.fetchProfile(token) { [weak self] result in
+            guard let self = self else { return }
             switch result {
-            case .success:
+            case .success(let profile):
+                self.profileService.profile = .init(from: profile)
                 self.switchToTabBarController()
             case .failure:
-                break
+                fatalError("Fetch profile Error")
             }
         }
     }
-    
 }
 
 //MARK: - AuthViewControllerDelegate
@@ -94,7 +95,11 @@ extension SplashViewController: AuthViewControllerDelegate {
     func didAuthenticate(_ vc: AuthViewController) {
         dismiss(animated: true) { [weak self] in
             guard let self else { return }
-            self.switchToTabBarController()
+            
+            guard let token = oauth2TokenStorage.token else {
+                return
+            }
+            self.fetchProfile(token)
         }
     }
     

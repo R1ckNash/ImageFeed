@@ -10,6 +10,8 @@ import Foundation
 final class OAuth2TokenStorage {
     
     //MARK: - Public Properties
+    static let shared = OAuth2TokenStorage()
+    
     var token: String? {
         get {
             dataStorage.string(forKey: tokenKey)

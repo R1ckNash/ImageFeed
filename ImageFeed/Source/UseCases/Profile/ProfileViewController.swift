@@ -9,21 +9,32 @@ import UIKit
 
 final class ProfileViewController: UIViewController {
     
-    //MARK: - Visual Components
+    // MARK: - Visual Components
     private let avatarImageview = UIImageView()
     private let nameLabel = UILabel()
     private let loginNameLabel = UILabel()
     private let descriptionLabel = UILabel()
     private let logoutButton = UIButton()
     
-    //MARK: - ProfileViewController
+    // MARK: - Private Properties
+    private let profileService = ProfileService.shared
+    
+    // MARK: - ProfileViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUI()
+        updateProfileDetails()
     }
     
-    //MARK: - Private methods
+    private func updateProfileDetails() {
+        guard let profile = profileService.profile else { return }
+        
+        nameLabel.text = profile.name
+        loginNameLabel.text = profile.loginName
+        descriptionLabel.text = profile.bio
+    }
+    
     private func didTapLogoutButton() {
         
     }

@@ -1,42 +1,33 @@
 //
-//  OAuth2Service.swift
+//  ProfileService.swift
 //  ImageFeed
 //
-//  Created by Ilia Liasin on 10/11/2024.
+//  Created by Ilia Liasin on 19/11/2024.
 //
 
 import Foundation
 
-final class OAuth2Service {
+final class ProfileService {
     
-    //MARK: - Public Properties
-    static let shared = OAuth2Service()
+    // MARK: - Public Properties
+    static let shared = ProfileService()
+    var profile: Profile?
     
     //MARK: - Private Properties
-    private let tokenStorage = OAuth2TokenStorage.shared
     private let decoder: JSONDecoder
     private let urlSession: URLSession
     private var task: URLSessionTask?
     private var lastCode: String?
     
-    private(set) var authToken: String? {
-        get {
-            return tokenStorage.token
-        }
-        set {
-            tokenStorage.token = newValue
-        }
-    }
-    
-    //MARK: - Initializers
+    // MARK: - Initializers
     private init() {
         decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         urlSession = URLSession.shared
     }
     
-    //MARK: - Public Methods
-    func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
+    // MARK: - Public Methods
+    func fetchProfile(_ code: String, completion: @escaping (Result<ProfileResult, Error>) -> Void) {
         assert(Thread.isMainThread)
         
         guard lastCode != code else {
@@ -47,7 +38,7 @@ final class OAuth2Service {
         task?.cancel()
         lastCode = code
         
-        guard let request = makeOAuthTokenRequest(code: code) else {
+        guard let request = makeProfileRequest(with: code) else {
             completion(.failure(NetworkError.invalidRequest))
             return
         }
@@ -61,9 +52,7 @@ final class OAuth2Service {
                 
                 switch result {
                 case .success(let body):
-                    let authToken = body.accessToken
-                    self.authToken = authToken
-                    completion(.success(authToken))
+                    completion(.success(body))
                 case .failure(let error):
                     completion(.failure(error))
                 }
@@ -71,41 +60,30 @@ final class OAuth2Service {
         }
         self.task = task
         task.resume()
+        
     }
     
-    private func makeOAuthTokenRequest(code: String) -> URLRequest? {
+    // MARK: - Private Methods
+    private func makeProfileRequest(with token: String) -> URLRequest? {
         
-        guard let url = URL(string: "https://unsplash.com/oauth/token") else {
+        guard let url = URL(string: "\(Constants.defaultBaseURL)/me") else {
             print("Error: Invalid URL")
             return nil
         }
         
-        var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        urlComponents?.queryItems = [
-            .init(name: "client_id", value: Constants.accessKey),
-            .init(name: "client_secret", value: Constants.secretKey),
-            .init(name: "redirect_uri", value: Constants.redirectURI),
-            .init(name: "code", value: code),
-            .init(name: "grant_type", value: "authorization_code")
-        ]
-        
-        guard let finalURL = urlComponents?.url else {
-            print("Error: Invalid final URL")
-            return nil
-        }
-        
-        var request = URLRequest(url: finalURL)
-        request.httpMethod = "POST"
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpMethod = "GET"
         
         return request
     }
 }
 
 // MARK: - Network Client
-extension OAuth2Service {
+extension ProfileService {
     
     private func object(for request: URLRequest,
-                        completion: @escaping (Result<OAuthTokenResponseBody, Error>) -> Void) -> URLSessionTask {
+                        completion: @escaping (Result<ProfileResult, Error>) -> Void) -> URLSessionTask {
         
         return urlSession.data(for: request) { [weak self] (result: Result<Data, Error>) in
             guard let self else { return }
@@ -113,7 +91,7 @@ extension OAuth2Service {
             switch result {
             case .success(let data):
                 do {
-                    let body = try self.decoder.decode(OAuthTokenResponseBody.self, from: data)
+                    let body = try self.decoder.decode(ProfileResult.self, from: data)
                     completion(.success(body))
                 }
                 catch {
