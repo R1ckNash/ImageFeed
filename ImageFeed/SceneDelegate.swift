@@ -12,7 +12,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        guard let _ = (scene as? UIWindowScene) else { return }
+        
+        guard let scene = (scene as? UIWindowScene) else { return }
+        
+//        window = UIWindow(windowScene: scene)
+//        window?.rootViewController = SplashViewController()
+//        window?.makeKeyAndVisible()
+        
+        window = UIWindow(windowScene: scene)
+            let splashVC = SplashViewController()
+            let navigationController = UINavigationController(rootViewController: splashVC)
+            navigationController.navigationBar.isHidden = true
+            
+            window?.rootViewController = navigationController
+            window?.makeKeyAndVisible()
     }
 
 }

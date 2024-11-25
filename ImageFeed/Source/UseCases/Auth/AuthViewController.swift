@@ -40,7 +40,6 @@ final class AuthViewController: UIViewController {
     weak var delegate: AuthViewControllerDelegate?
     
     //MARK: - Private Properties
-    private let showWebViewSegueIdentifier = "ShowWebView"
     private let oauth2Service = OAuth2Service.shared
 
     //MARK: - Lifecycle
@@ -48,20 +47,6 @@ final class AuthViewController: UIViewController {
         super.viewDidLoad()
 
         configureUI()
-    }
-    
-    //MARK: - Public Methods
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showWebViewSegueIdentifier {
-            guard let webViewViewController = segue.destination as? WebViewViewController
-            else {
-                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
-                return
-            }
-            webViewViewController.delegate = self
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
     }
     
     //MARK: - Private Methods
@@ -86,7 +71,10 @@ final class AuthViewController: UIViewController {
     }
     
     @objc private func loginButtonTapped () {
-        performSegue(withIdentifier: showWebViewSegueIdentifier, sender: nil)
+        let webViewController = WebViewViewController()
+        webViewController.delegate = self
+        webViewController.modalPresentationStyle = .fullScreen
+        self.navigationController?.pushViewController(webViewController, animated: true)
     }
 
 }
@@ -108,15 +96,25 @@ extension AuthViewController: WebViewViewControllerDelegate {
             case .success:
                 self.delegate?.didAuthenticate(self)
             case .failure:
-                // TODO: Handle
-                break
+                let alertController = UIAlertController(
+                    title: "Something went wrong(",
+                    message: "Failed to log in",
+                    preferredStyle: .alert
+                )
+                
+                let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+                    alertController.dismiss(animated: true, completion: nil)
+                }
+                
+                alertController.addAction(okAction)
+                
+                self.present(alertController, animated: true, completion: nil)
             }
         }
-        
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
-        vc.dismiss(animated: true)
+        self.navigationController?.popViewController(animated: true)
     }
     
 }

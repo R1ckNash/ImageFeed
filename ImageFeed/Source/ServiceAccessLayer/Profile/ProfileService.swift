@@ -31,7 +31,7 @@ final class ProfileService {
         assert(Thread.isMainThread)
         
         guard lastCode != code else {
-            completion(.failure(NetworkError.invalidRequest))
+            print("Fetch already in progress")
             return
         }
         
@@ -39,11 +39,14 @@ final class ProfileService {
         lastCode = code
         
         guard let request = makeProfileRequest(with: code) else {
+            print("Error: Failed to create request")
             completion(.failure(NetworkError.invalidRequest))
             return
         }
         
-        let task = object(for: request) { [weak self] result in
+        print("Fetching profile with request: \(request)")
+        
+        let task = urlSession.objectTask(for: request) { [weak self] (result: Result<ProfileResult, Error>) in
             guard let self else { return }
             
             DispatchQueue.main.async {
@@ -52,8 +55,10 @@ final class ProfileService {
                 
                 switch result {
                 case .success(let body):
+                    print("Profile fetch success: \(body)")
                     completion(.success(body))
                 case .failure(let error):
+                    print("Profile fetch failure: \(error.localizedDescription)")
                     completion(.failure(error))
                 }
             }
@@ -65,6 +70,7 @@ final class ProfileService {
     
     // MARK: - Private Methods
     private func makeProfileRequest(with token: String) -> URLRequest? {
+        print("Creating profile request with token: \(token)")
         
         guard let url = URL(string: "\(Constants.defaultBaseURL)/me") else {
             print("Error: Invalid URL")
@@ -77,31 +83,4 @@ final class ProfileService {
         
         return request
     }
-}
-
-// MARK: - Network Client
-extension ProfileService {
-    
-    private func object(for request: URLRequest,
-                        completion: @escaping (Result<ProfileResult, Error>) -> Void) -> URLSessionTask {
-        
-        return urlSession.data(for: request) { [weak self] (result: Result<Data, Error>) in
-            guard let self else { return }
-            
-            switch result {
-            case .success(let data):
-                do {
-                    let body = try self.decoder.decode(ProfileResult.self, from: data)
-                    completion(.success(body))
-                }
-                catch {
-                    completion(.failure(NetworkError.decodingError(error)))
-                }
-                
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
 }

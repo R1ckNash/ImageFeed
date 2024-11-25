@@ -10,9 +10,9 @@ import UIKit
 final class SplashViewController: UIViewController {
     
     //MARK: - Private Properties
-    private let ShowAuthenticationScreenSegueIdentifier = "ShowAuthenticationScreen"
     private let oauth2Service = OAuth2Service.shared
     private let profileService = ProfileService.shared
+    private let profileImageService = ProfileImageService.shared
     private let oauth2TokenStorage = OAuth2TokenStorage()
     
     //MARK: - SplashViewController
@@ -37,7 +37,10 @@ final class SplashViewController: UIViewController {
         if let token = oauth2TokenStorage.token {
             self.fetchProfile(token)
         } else {
-            performSegue(withIdentifier: ShowAuthenticationScreenSegueIdentifier, sender: nil)
+            let authVC = AuthViewController()
+            authVC.delegate = self
+            authVC.modalPresentationStyle = .fullScreen
+            navigationController?.pushViewController(authVC, animated: true)
         }
     }
     
@@ -49,18 +52,6 @@ final class SplashViewController: UIViewController {
     //MARK: - Public Methods
     override var preferredStatusBarStyle: UIStatusBarStyle {
         .lightContent
-    }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == ShowAuthenticationScreenSegueIdentifier {
-            guard
-                let navigationController = segue.destination as? UINavigationController,
-                let viewController = navigationController.viewControllers[0] as? AuthViewController
-            else { fatalError("Failed to prepare for \(ShowAuthenticationScreenSegueIdentifier)") }
-            viewController.delegate = self
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
     }
     
     //MARK: - Private Methods
@@ -81,9 +72,10 @@ final class SplashViewController: UIViewController {
             switch result {
             case .success(let profile):
                 self.profileService.profile = .init(from: profile)
+                self.profileImageService.fetchProfileImageUrl(profile.username, token) { _ in }
                 self.switchToTabBarController()
             case .failure:
-                fatalError("Fetch profile Error")
+                fatalError("Fetching profile failed")
             }
         }
     }
@@ -93,12 +85,8 @@ final class SplashViewController: UIViewController {
 extension SplashViewController: AuthViewControllerDelegate {
     
     func didAuthenticate(_ vc: AuthViewController) {
-        dismiss(animated: true) { [weak self] in
-            guard let self else { return }
-            
-            guard let token = oauth2TokenStorage.token else {
-                return
-            }
+        self.navigationController?.popViewController(animated: true)
+        if let token = oauth2TokenStorage.token {
             self.fetchProfile(token)
         }
     }

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     
@@ -18,6 +19,7 @@ final class ProfileViewController: UIViewController {
     
     // MARK: - Private Properties
     private let profileService = ProfileService.shared
+    private var profileImageServiceObserver: NSObjectProtocol?
     
     // MARK: - ProfileViewController
     override func viewDidLoad() {
@@ -25,6 +27,28 @@ final class ProfileViewController: UIViewController {
         
         configureUI()
         updateProfileDetails()
+        
+        profileImageServiceObserver = NotificationCenter.default
+            .addObserver(
+                forName: ProfileImageService.didChangeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.updateAvatar()
+            }
+        updateAvatar()
+    }
+    
+    // MARK: - Private Methods
+    private func updateAvatar() {
+        guard let profileImageURL = ProfileImageService.shared.avatarURL,
+              let url = URL(string: profileImageURL) else {
+            return
+        }
+        let processor = RoundCornerImageProcessor(cornerRadius: 20)
+        avatarImageview.kf.setImage(with: url, placeholder: UIImage(named: "Photo"),
+                                    options: [.processor(processor)])
     }
     
     private func updateProfileDetails() {
