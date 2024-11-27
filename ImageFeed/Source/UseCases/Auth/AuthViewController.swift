@@ -6,9 +6,10 @@
 //
 
 import UIKit
+import ProgressHUD
 
 protocol AuthViewControllerDelegate: AnyObject {
-    func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String)
+    func didAuthenticate(_ vc: AuthViewController)
 }
 
 final class AuthViewController: UIViewController {
@@ -39,7 +40,6 @@ final class AuthViewController: UIViewController {
     weak var delegate: AuthViewControllerDelegate?
     
     //MARK: - Private Properties
-    private let showWebViewSegueIdentifier = "ShowWebView"
     private let oauth2Service = OAuth2Service.shared
 
     //MARK: - Lifecycle
@@ -47,20 +47,6 @@ final class AuthViewController: UIViewController {
         super.viewDidLoad()
 
         configureUI()
-    }
-    
-    //MARK: - Public Methods
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showWebViewSegueIdentifier {
-            guard let webViewViewController = segue.destination as? WebViewViewController
-            else {
-                assertionFailure("Failed to prepare for \(showWebViewSegueIdentifier)")
-                return
-            }
-            webViewViewController.delegate = self
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
     }
     
     //MARK: - Private Methods
@@ -85,7 +71,10 @@ final class AuthViewController: UIViewController {
     }
     
     @objc private func loginButtonTapped () {
-        performSegue(withIdentifier: showWebViewSegueIdentifier, sender: nil)
+        let webViewController = WebViewViewController()
+        webViewController.delegate = self
+        webViewController.modalPresentationStyle = .fullScreen
+        self.navigationController?.pushViewController(webViewController, animated: true)
     }
 
 }
@@ -94,11 +83,38 @@ final class AuthViewController: UIViewController {
 extension AuthViewController: WebViewViewControllerDelegate {
     
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        delegate?.authViewController(self, didAuthenticateWithCode: code)
+        
+        vc.dismiss(animated: true)
+        UIBlockingProgressHUD.show()
+        
+        oauth2Service.fetchOAuthToken(code) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            
+            guard let self else { return }
+            
+            switch result {
+            case .success:
+                self.delegate?.didAuthenticate(self)
+            case .failure:
+                let alertController = UIAlertController(
+                    title: "Something went wrong(",
+                    message: "Failed to log in",
+                    preferredStyle: .alert
+                )
+                
+                let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+                    alertController.dismiss(animated: true, completion: nil)
+                }
+                
+                alertController.addAction(okAction)
+                
+                self.present(alertController, animated: true, completion: nil)
+            }
+        }
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
-        vc.dismiss(animated: true)
+        self.navigationController?.popViewController(animated: true)
     }
     
 }

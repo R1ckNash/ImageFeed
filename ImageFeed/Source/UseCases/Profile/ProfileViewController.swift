@@ -6,24 +6,59 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     
-    //MARK: - Visual Components
+    // MARK: - Visual Components
     private let avatarImageview = UIImageView()
     private let nameLabel = UILabel()
     private let loginNameLabel = UILabel()
     private let descriptionLabel = UILabel()
     private let logoutButton = UIButton()
     
-    //MARK: - ProfileViewController
+    // MARK: - Private Properties
+    private let profileService = ProfileService.shared
+    private var profileImageServiceObserver: NSObjectProtocol?
+    
+    // MARK: - ProfileViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUI()
+        updateProfileDetails()
+        
+        profileImageServiceObserver = NotificationCenter.default
+            .addObserver(
+                forName: ProfileImageService.didChangeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.updateAvatar()
+            }
+        updateAvatar()
     }
     
-    //MARK: - Private methods
+    // MARK: - Private Methods
+    private func updateAvatar() {
+        guard let profileImageURL = ProfileImageService.shared.avatarURL,
+              let url = URL(string: profileImageURL) else {
+            return
+        }
+        let processor = RoundCornerImageProcessor(cornerRadius: 20)
+        avatarImageview.kf.setImage(with: url, placeholder: UIImage(named: "Photo"),
+                                    options: [.processor(processor)])
+    }
+    
+    private func updateProfileDetails() {
+        guard let profile = profileService.profile else { return }
+        
+        nameLabel.text = profile.name
+        loginNameLabel.text = profile.loginName
+        descriptionLabel.text = profile.bio
+    }
+    
     private func didTapLogoutButton() {
         
     }

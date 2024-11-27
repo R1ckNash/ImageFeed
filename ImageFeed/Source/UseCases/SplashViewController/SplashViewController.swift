@@ -10,8 +10,9 @@ import UIKit
 final class SplashViewController: UIViewController {
     
     //MARK: - Private Properties
-    private let ShowAuthenticationScreenSegueIdentifier = "ShowAuthenticationScreen"
     private let oauth2Service = OAuth2Service.shared
+    private let profileService = ProfileService.shared
+    private let profileImageService = ProfileImageService.shared
     private let oauth2TokenStorage = OAuth2TokenStorage()
     
     //MARK: - SplashViewController
@@ -33,10 +34,13 @@ final class SplashViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if oauth2TokenStorage.token != nil {
-            switchToTabBarController()
+        if let token = oauth2TokenStorage.token {
+            self.fetchProfile(token)
         } else {
-            performSegue(withIdentifier: ShowAuthenticationScreenSegueIdentifier, sender: nil)
+            let authVC = AuthViewController()
+            authVC.delegate = self
+            authVC.modalPresentationStyle = .fullScreen
+            navigationController?.pushViewController(authVC, animated: true)
         }
     }
     
@@ -50,47 +54,40 @@ final class SplashViewController: UIViewController {
         .lightContent
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == ShowAuthenticationScreenSegueIdentifier {
-            guard
-                let navigationController = segue.destination as? UINavigationController,
-                let viewController = navigationController.viewControllers[0] as? AuthViewController
-            else { fatalError("Failed to prepare for \(ShowAuthenticationScreenSegueIdentifier)") }
-            viewController.delegate = self
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
-    }
-    
     //MARK: - Private Methods
     private func switchToTabBarController() {
-        guard let window = UIApplication.shared.windows.first else { fatalError("Invalid Configuration") }
+        guard let window = UIApplication.shared.windows.first else {
+            assertionFailure("Invalid window configuration")
+            return
+        }
+        
         let tabBarController = UIStoryboard(name: "Main", bundle: .main)
             .instantiateViewController(withIdentifier: "TabBarViewController")
         window.rootViewController = tabBarController
     }
     
-    private func fetchOAuthToken(_ code: String) {
-        oauth2Service.fetchOAuthToken(code) { [weak self] result in
-            guard let self else { return }
+    private func fetchProfile(_ token: String) {
+        profileService.fetchProfile(token) { [weak self] result in
+            guard let self = self else { return }
             switch result {
-            case .success:
+            case .success(let profile):
+                self.profileService.profile = .init(from: profile)
+                self.profileImageService.fetchProfileImageUrl(profile.username, token) { _ in }
                 self.switchToTabBarController()
             case .failure:
-                break
+                fatalError("Fetching profile failed")
             }
         }
     }
-    
 }
 
 //MARK: - AuthViewControllerDelegate
 extension SplashViewController: AuthViewControllerDelegate {
     
-    func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
-        dismiss(animated: true) { [weak self] in
-            guard let self else { return }
-            self.fetchOAuthToken(code)
+    func didAuthenticate(_ vc: AuthViewController) {
+        self.navigationController?.popViewController(animated: true)
+        if let token = oauth2TokenStorage.token {
+            self.fetchProfile(token)
         }
     }
     

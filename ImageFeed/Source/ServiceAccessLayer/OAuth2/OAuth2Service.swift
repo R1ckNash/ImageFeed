@@ -13,51 +13,67 @@ final class OAuth2Service {
     static let shared = OAuth2Service()
     
     //MARK: - Private Properties
-    private let tokenStorage: OAuth2TokenStorage
+    private let tokenStorage = OAuth2TokenStorage.shared
     private let decoder: JSONDecoder
+    private let urlSession: URLSession
+    private var task: URLSessionTask?
+    private var lastCode: String?
+    
+    private(set) var authToken: String? {
+        get {
+            return tokenStorage.token
+        }
+        set {
+            tokenStorage.token = newValue
+        }
+    }
     
     //MARK: - Initializers
     private init() {
-        tokenStorage = OAuth2TokenStorage()
         decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
+        urlSession = URLSession.shared
     }
     
     //MARK: - Public Methods
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
+        assert(Thread.isMainThread)
         
-        guard let request = makeOAuthTokenRequest(code: code) else {
-            print("Error: Invalid request")
+        guard lastCode != code else {
+            completion(.failure(NetworkError.invalidRequest))
             return
         }
         
-        URLSession.shared.data(for: request) { [weak self] result in
-            guard let self else {
-                completion(.failure(NetworkError.urlSessionError))
-                return
-            }
+        task?.cancel()
+        lastCode = code
+        
+        guard let request = makeOAuthTokenRequest(code: code) else {
+            completion(.failure(NetworkError.invalidRequest))
+            return
+        }
+        
+        let task = urlSession.objectTask(for: request) { [weak self] (result: Result<OAuthTokenResponseBody, Error>) in
+            guard let self else { return }
             
-            switch result {
-            case .success(let data):
-                do {
-                    let tokenResponse = try decoder.decode(OAuthTokenResponseBody.self, from: data)
-                    self.tokenStorage.token = tokenResponse.accessToken
-                    print("Saved token - \(self.tokenStorage.token ?? "nil")")
-                    completion(.success(tokenResponse.accessToken))
-                } catch {
-                    print("Failed to decode token: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                self.task = nil
+                self.lastCode = nil
+                
+                switch result {
+                case .success(let body):
+                    let authToken = body.accessToken
+                    self.authToken = authToken
+                    completion(.success(authToken))
+                case .failure(let error):
                     completion(.failure(error))
                 }
-                
-            case .failure(let error):
-                print("Network error: \(error.localizedDescription)")
-                completion(.failure(error))
             }
         }
-        .resume()
+        self.task = task
+        task.resume()
     }
     
-    func makeOAuthTokenRequest(code: String) -> URLRequest? {
+    private func makeOAuthTokenRequest(code: String) -> URLRequest? {
         
         guard let url = URL(string: "https://unsplash.com/oauth/token") else {
             print("Error: Invalid URL")
@@ -84,3 +100,30 @@ final class OAuth2Service {
         return request
     }
 }
+
+// MARK: - Network Client
+//extension OAuth2Service {
+//    
+//    private func object(for request: URLRequest,
+//                        completion: @escaping (Result<OAuthTokenResponseBody, Error>) -> Void) -> URLSessionTask {
+//        
+//        return urlSession.data(for: request) { [weak self] (result: Result<Data, Error>) in
+//            guard let self else { return }
+//            
+//            switch result {
+//            case .success(let data):
+//                do {
+//                    let body = try self.decoder.decode(OAuthTokenResponseBody.self, from: data)
+//                    completion(.success(body))
+//                }
+//                catch {
+//                    completion(.failure(NetworkError.decodingError(error)))
+//                }
+//                
+//            case .failure(let error):
+//                completion(.failure(error))
+//            }
+//        }
+//    }
+//    
+//}

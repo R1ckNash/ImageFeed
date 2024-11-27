@@ -20,7 +20,7 @@ protocol WebViewViewControllerDelegate: AnyObject {
 
 final class WebViewViewController: UIViewController {
     
-    //MARK: - Visual Components
+    // MARK: - Visual Components
     private lazy var webView: WKWebView = {
         let webView = WKWebView()
         webView.backgroundColor = .white
@@ -47,10 +47,13 @@ final class WebViewViewController: UIViewController {
         return progressView
     }()
     
-    //MARK: - Public Properties
+    // MARK: - Public Properties
     weak var delegate: WebViewViewControllerDelegate?
+    
+    // MARK: - Private Properties
+    private var estimatedProgressObservation: NSKeyValueObservation?
 
-    //MARK: - WebViewViewController
+    // MARK: - WebViewViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -64,21 +67,16 @@ final class WebViewViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        webView.addObserver(
-            self,
-            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-            options: .new,
-            context: nil)
-        updateProgress()
+        estimatedProgressObservation = webView.observe(
+            \.estimatedProgress,
+             options: [],
+             changeHandler: { [weak self] _, _ in
+                 guard let self = self else { return }
+                 self.updateProgress()
+             })
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
-    }
-    
-    //MARK: - Public Methods
+    // MARK: - Public Methods
     override func observeValue(
         forKeyPath keyPath: String?,
         of object: Any?,
@@ -91,7 +89,7 @@ final class WebViewViewController: UIViewController {
         }
     }
     
-    //MARK: - Private Methods
+    // MARK: - Private Methods
     private func configureUI() {
         
         view.backgroundColor = .white
@@ -147,7 +145,7 @@ final class WebViewViewController: UIViewController {
     }
     
     @objc private func didTapBackButton() {
-        dismiss(animated: true)
+        self.navigationController?.popViewController(animated: true)
     }
     
     private func code(from navigationAction: WKNavigationAction) -> String? {
@@ -166,7 +164,7 @@ final class WebViewViewController: UIViewController {
 
 }
 
-//MARK: - WKNavigationDelegate
+// MARK: - WKNavigationDelegate
 extension WebViewViewController: WKNavigationDelegate {
     
     func webView(_ webView: WKWebView,
@@ -175,6 +173,7 @@ extension WebViewViewController: WKNavigationDelegate {
         
         if let code = code(from: navigationAction) {
             delegate?.webViewViewController(self, didAuthenticateWithCode: code)
+            progressView.isHidden = true
             decisionHandler(.cancel)
         } else {
             decisionHandler(.allow)
