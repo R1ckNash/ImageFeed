@@ -75,7 +75,8 @@ final class SplashViewController: UIViewController {
                 self.profileImageService.fetchProfileImageUrl(profile.username, token) { _ in }
                 self.switchToTabBarController()
             case .failure:
-                fatalError("Fetching profile failed")
+               // fatalError("Fetching profile failed")
+                self.switchToTabBarController()
             }
         }
     }

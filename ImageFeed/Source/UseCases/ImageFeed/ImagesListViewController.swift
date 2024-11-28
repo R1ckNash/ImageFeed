@@ -8,9 +8,15 @@
 import UIKit
 
 final class ImagesListViewController: UIViewController {
-
-    //MARK: - IBOutlets
-    @IBOutlet private weak var tableView: UITableView!
+    
+    // MARK: - Visual Components
+    private lazy var tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.backgroundColor = .ypBlack
+        tableView.separatorStyle = .none
+        
+        return tableView
+    }()
     
     //MARK: - Private Properties
     private let photosName: [String] = Array(0..<20).map { "\($0)" }
@@ -25,27 +31,46 @@ final class ImagesListViewController: UIViewController {
     //MARK: - ImagesListViewController
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        setupTableView()
     }
     
     //MARK: - Public Methods
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showSingleImageSegueIdentifier {
-            guard
-                let viewController = segue.destination as? SingleImageViewController,
-                let indexPath = sender as? IndexPath
-            else {
-                assertionFailure("Invalid segue destination")
-                return
-            }
-            
-            let image = UIImage(named: photosName[indexPath.row])
-            viewController.setImage(image)
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
-    }
+//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//        if segue.identifier == showSingleImageSegueIdentifier {
+//            guard
+//                let viewController = segue.destination as? SingleImageViewController,
+//                let indexPath = sender as? IndexPath
+//            else {
+//                assertionFailure("Invalid segue destination")
+//                return
+//            }
+//            
+//            let image = UIImage(named: photosName[indexPath.row])
+//            viewController.setImage(image)
+//        } else {
+//            super.prepare(for: segue, sender: sender)
+//        }
+//    }
     
     //MARK: - Private Methods
+    private func setupTableView() {
+        
+        view.addSubview(tableView)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        tableView.register(ImagesListCell.self, forCellReuseIdentifier: ImagesListCell.reuseIdentifier)
+        tableView.dataSource = self
+        tableView.delegate = self
+    }
+    
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath)  {
         
         guard let image = UIImage(named: photosName[indexPath.row]) else {
@@ -68,16 +93,11 @@ extension ImagesListViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath)
-        
-        guard let imageListCell = cell as? ImagesListCell else {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath) as? ImagesListCell else {
             return UITableViewCell()
         }
-        
-        configCell(for: imageListCell, with: indexPath)
-        
-        return imageListCell
+        configCell(for: cell, with: indexPath)
+        return cell
     }
     
 }
@@ -97,8 +117,8 @@ extension ImagesListViewController: UITableViewDelegate {
         return cellHeight
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
-    }
+//    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
+//    }
     
 }
