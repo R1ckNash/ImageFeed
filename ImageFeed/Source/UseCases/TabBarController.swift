@@ -10,9 +10,23 @@ import UIKit
 
 final class TabBarController: UITabBarController {
     
-    override func awakeFromNib() {
-        super.awakeFromNib()
+    // MARK: - Initializers
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        setupTabBar()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupTabBar()
+    }
+    
+    // MARK: - Private Methods
+    private func setupTabBar() {
         
+        tabBar.barTintColor = .ypBlack
+        tabBar.unselectedItemTintColor = .gray
+        tabBar.tintColor = .white
         
         let imagesListViewController = ImagesListViewController()
         imagesListViewController.tabBarItem = UITabBarItem(title: "",
@@ -26,6 +40,6 @@ final class TabBarController: UITabBarController {
         )
         
         self.viewControllers = [imagesListViewController, profileViewController]
-        
     }
+    
 }

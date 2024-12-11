@@ -61,8 +61,8 @@ final class SplashViewController: UIViewController {
             return
         }
         
-        let tabBarController = UIStoryboard(name: "Main", bundle: .main)
-            .instantiateViewController(withIdentifier: "TabBarViewController")
+        let tabBarController = TabBarController()
+        
         window.rootViewController = tabBarController
     }
     
@@ -75,8 +75,7 @@ final class SplashViewController: UIViewController {
                 self.profileImageService.fetchProfileImageUrl(profile.username, token) { _ in }
                 self.switchToTabBarController()
             case .failure:
-               // fatalError("Fetching profile failed")
-                self.switchToTabBarController()
+                fatalError("Fetching profile failed")
             }
         }
     }
