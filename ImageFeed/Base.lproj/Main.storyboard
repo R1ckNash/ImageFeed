@@ -5,7 +5,6 @@
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
-        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -27,87 +26,8 @@
             </objects>
             <point key="canvasLocation" x="-811" y="49"/>
         </scene>
-        <!--Single Image View Controller-->
-        <scene sceneID="OVO-G3-Xwl">
-            <objects>
-                <viewController modalPresentationStyle="fullScreen" id="Q2T-du-fCd" customClass="SingleImageViewController" customModule="ImageFeed" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="ZG5-mG-reH">
-                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="DNZ-bu-yJQ">
-                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
-                                <subviews>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="414" placeholderIntrinsicHeight="414" image="0" translatesAutoresizingMaskIntoConstraints="NO" id="AbN-RH-wHV">
-                                        <rect key="frame" x="0.0" y="0.0" width="414" height="414"/>
-                                    </imageView>
-                                </subviews>
-                                <constraints>
-                                    <constraint firstItem="AbN-RH-wHV" firstAttribute="bottom" secondItem="DNZ-bu-yJQ" secondAttribute="bottom" id="Bsq-s7-5ko"/>
-                                    <constraint firstItem="AbN-RH-wHV" firstAttribute="top" secondItem="DNZ-bu-yJQ" secondAttribute="top" id="SeS-aD-ghU"/>
-                                    <constraint firstAttribute="trailing" secondItem="AbN-RH-wHV" secondAttribute="trailing" id="vOc-xu-tyf"/>
-                                    <constraint firstItem="AbN-RH-wHV" firstAttribute="leading" secondItem="DNZ-bu-yJQ" secondAttribute="leading" id="xYk-bb-itk"/>
-                                </constraints>
-                                <viewLayoutGuide key="contentLayoutGuide" id="aqf-h3-xCt"/>
-                                <viewLayoutGuide key="frameLayoutGuide" id="uPQ-bT-Dme"/>
-                                <connections>
-                                    <outlet property="delegate" destination="Q2T-du-fCd" id="cA9-ZD-w8M"/>
-                                </connections>
-                            </scrollView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="oFY-sy-Ocj" userLabel="Sharing Button">
-                                <rect key="frame" x="171" y="750" width="51" height="51"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="51" id="LfZ-dl-uXF"/>
-                                    <constraint firstAttribute="width" constant="51" id="hec-1D-7n9"/>
-                                </constraints>
-                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                                <state key="normal" image="sharing_button"/>
-                                <connections>
-                                    <action selector="didTapShareButton:" destination="Q2T-du-fCd" eventType="touchUpInside" id="pEd-No-7ia"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5LZ-jb-J3A">
-                                <rect key="frame" x="16" y="91" width="24" height="24"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="24" id="Etb-xR-fMR"/>
-                                    <constraint firstAttribute="width" constant="24" id="a09-d5-OeR"/>
-                                </constraints>
-                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                                <state key="normal" image="chevron.backward" catalog="system"/>
-                                <connections>
-                                    <action selector="didTapBackButton:" destination="Q2T-du-fCd" eventType="touchUpInside" id="hcA-9e-aqE"/>
-                                </connections>
-                            </button>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="VIf-4L-RFR"/>
-                        <color key="backgroundColor" name="YP Black"/>
-                        <constraints>
-                            <constraint firstItem="5LZ-jb-J3A" firstAttribute="leading" secondItem="ZG5-mG-reH" secondAttribute="leading" constant="16" id="H6C-yJ-wnO"/>
-                            <constraint firstItem="DNZ-bu-yJQ" firstAttribute="trailing" secondItem="VIf-4L-RFR" secondAttribute="trailing" id="H6L-A5-i5b"/>
-                            <constraint firstItem="oFY-sy-Ocj" firstAttribute="centerX" secondItem="VIf-4L-RFR" secondAttribute="centerX" id="ON1-qU-mX8"/>
-                            <constraint firstItem="DNZ-bu-yJQ" firstAttribute="top" secondItem="ZG5-mG-reH" secondAttribute="top" id="Zwo-e6-xYs"/>
-                            <constraint firstItem="5LZ-jb-J3A" firstAttribute="top" secondItem="ZG5-mG-reH" secondAttribute="top" constant="91" id="fir-8o-Q2O"/>
-                            <constraint firstItem="DNZ-bu-yJQ" firstAttribute="bottom" secondItem="ZG5-mG-reH" secondAttribute="bottom" id="gW2-cq-TRw"/>
-                            <constraint firstItem="DNZ-bu-yJQ" firstAttribute="leading" secondItem="VIf-4L-RFR" secondAttribute="leading" id="kEB-CX-OM7"/>
-                            <constraint firstItem="VIf-4L-RFR" firstAttribute="bottom" secondItem="oFY-sy-Ocj" secondAttribute="bottom" constant="17" id="nPR-Tv-Lfv"/>
-                        </constraints>
-                    </view>
-                    <navigationItem key="navigationItem" id="9pj-3r-sWP"/>
-                    <connections>
-                        <outlet property="imageView" destination="AbN-RH-wHV" id="lhM-hB-HX7"/>
-                        <outlet property="scrollView" destination="DNZ-bu-yJQ" id="i6b-Ku-aXK"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="8fW-rV-B5s" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="1264.885496183206" y="-287.32394366197184"/>
-        </scene>
     </scenes>
     <resources>
-        <image name="0" width="1600" height="1059"/>
-        <image name="chevron.backward" catalog="system" width="97" height="128"/>
-        <image name="sharing_button" width="51" height="51"/>
         <namedColor name="YP Black">
             <color red="0.10196078431372549" green="0.10588235294117647" blue="0.13333333333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

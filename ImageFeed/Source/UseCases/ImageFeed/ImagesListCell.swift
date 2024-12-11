@@ -58,7 +58,6 @@ final class ImagesListCell: UITableViewCell {
     
     // MARK: - Private Methods
     private func setupLayout() {
-        //contentView.layoutMargins = UIEdgeInsets(top: 50, left: 0, bottom: 50, right: 0)
         contentView.backgroundColor = .ypBlack
         contentView.addSubview(cellImage)
         contentView.addSubview(likeButton)
