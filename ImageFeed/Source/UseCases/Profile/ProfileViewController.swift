@@ -64,7 +64,6 @@ final class ProfileViewController: UIViewController {
     }
     
     private func configureUI() {
-        
         view.addSubview(avatarImageview)
         view.addSubview(nameLabel)
         view.addSubview(loginNameLabel)
