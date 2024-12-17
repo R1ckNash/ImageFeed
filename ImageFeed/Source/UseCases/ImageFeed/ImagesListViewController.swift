@@ -19,8 +19,7 @@ final class ImagesListViewController: UIViewController {
     }()
     
     // MARK: - Private Properties
-    private let photosName: [String] = Array(0..<20).map { "\($0)" }
-    private let showSingleImageSegueIdentifier = "ShowSingleImage"
+    private var photos: [Photo] = []
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
@@ -28,11 +27,20 @@ final class ImagesListViewController: UIViewController {
         return formatter
     }()
     
+    private let imagesListService = ImagesListService.shared
+    private var imagesListServiceObserver: NSObjectProtocol?
+    private let oauth2TokenStorage = OAuth2TokenStorage()
+    
     // MARK: - ImagesListViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupTableView()
+        observeServiceChanges()
+        
+        if let token = oauth2TokenStorage.token {
+            imagesListService.fetchPhotosNextPage(token)
+        }
     }
     
     // MARK: - Private Methods
@@ -53,16 +61,44 @@ final class ImagesListViewController: UIViewController {
         tableView.delegate = self
     }
     
-    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath)  {
+    private func observeServiceChanges() {
+        imagesListServiceObserver = NotificationCenter.default.addObserver(
+            forName: ImagesListService.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.updateTableViewAnimated()
+        }
+    }
+    
+    func updateTableViewAnimated() {
+        let oldCount = photos.count
+        let newCount = imagesListService.photos.count
+        photos = imagesListService.photos
+        if oldCount != newCount {
+            tableView.performBatchUpdates {
+                let indexPaths = (oldCount..<newCount).map { i in
+                    IndexPath(row: i, section: 0)
+                }
+                tableView.insertRows(at: indexPaths, with: .automatic)
+            } completion: { _ in }
+        }
+    }
+    
+    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
+        let photo = photos[indexPath.row]
+        cell.prepareForReuse()
         
-        guard let image = UIImage(named: photosName[indexPath.row]) else {
+        guard let imageURL = URL(string: photo.regularImageURL) else {
+            print("Error: Invalid image URL \(photo.regularImageURL)")
             return
         }
         
-        let date = dateFormatter.string(from: Date())
-        let isLiked = indexPath.row % 2 == 0
-        
-        cell.configure(with: image, isLiked: isLiked, date: date)
+        cell.configure(
+            with: imageURL,
+            isLiked: photo.isLiked,
+            date: dateFormatter.string(from: photo.createdAt)
+        )
     }
 
 }
@@ -71,7 +107,7 @@ final class ImagesListViewController: UIViewController {
 extension ImagesListViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        photosName.count
+        photos.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -87,29 +123,35 @@ extension ImagesListViewController: UITableViewDataSource {
 extension ImagesListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        guard let image = UIImage(named: photosName[indexPath.row]) else {
-            return 0
-        }
+        let photo = photos[indexPath.row]
         
         let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
         let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
-        let imageWidth = image.size.width
+        let imageWidth = photo.size.width
         let scale = imageViewWidth / imageWidth
-        let cellHeight = image.size.height * scale + imageInsets.top + imageInsets.bottom
+        let cellHeight = photo.size.height * scale + imageInsets.top + imageInsets.bottom
         return cellHeight
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let image = UIImage(named: photosName[indexPath.row]) else {
-            print("Error: Could not load image \(photosName[indexPath.row])")
+        let photo = photos[indexPath.row]
+        
+        guard let imageURL = URL(string: photo.largeImageURL) else {
+            print("Error: Invalid image URL \(photo.largeImageURL)")
             return
         }
         
         let vc = SingleImageViewController()
-        vc.setImage(image)
+        vc.setImage(with: imageURL)
         vc.modalPresentationStyle = .fullScreen
-        
         self.present(vc, animated: true)
     }
     
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.row + 1 == photos.count {
+            if let token = oauth2TokenStorage.token {
+                imagesListService.fetchPhotosNextPage(token)
+            }
+        }
+    }
 }

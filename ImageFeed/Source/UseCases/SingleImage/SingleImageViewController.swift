@@ -6,12 +6,11 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class SingleImageViewController: UIViewController {
     
     //MARK: - Visual Components
-    private var image: UIImage?
-    
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -55,17 +54,19 @@ final class SingleImageViewController: UIViewController {
         super.viewDidLoad()
         
         configureUI()
-        
-        guard let image else { return }
-        imageView.image = image
-        imageView.frame.size = image.size
-        
-        rescaleAndCenterImageInScrollView(image: image)
     }
     
     //MARK: - Public methods
-    func setImage(_ image: UIImage?) {
-        self.image = image
+    func setImage(with url: URL) {
+        imageView.kf.setImage(with: url) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let data):
+                self.rescaleAndCenterImageInScrollView(image: data.image)
+            case .failure(let error):
+                print("Error during feyching single photo: \(error.localizedDescription)")
+            }
+        }
     }
     
     //MARK: - Private Methods
@@ -74,7 +75,7 @@ final class SingleImageViewController: UIViewController {
     }
     
     @objc private func didTapShareButton() {
-        guard let image else { return }
+        guard let image = imageView.image else { return }
         let share = UIActivityViewController(
             activityItems: [image],
             applicationActivities: nil

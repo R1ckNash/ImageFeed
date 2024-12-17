@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ImagesListCell: UITableViewCell {
     
@@ -48,12 +49,23 @@ final class ImagesListCell: UITableViewCell {
     static let reuseIdentifier = "ImagesListCell"
     
     // MARK: - Public Methods
-    func configure(with image: UIImage, isLiked: Bool, date: String) {
-        cellImage.image = image
-        dateLabel.text = date
+    func configure(with imageURL: URL, isLiked: Bool, date: String) {
+        cellImage.kf.setImage(
+            with: imageURL,
+            placeholder: UIImage(named: "placeholder"),
+            options: [
+                .transition(.fade(0.2))
+            ])
         
+        dateLabel.text = date
         let likeImage = isLiked ? UIImage(named: "like_button_on") : UIImage(named: "like_button_off")
         likeButton.setImage(likeImage, for: .normal)
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        cellImage.kf.cancelDownloadTask()
     }
     
     // MARK: - Private Methods
