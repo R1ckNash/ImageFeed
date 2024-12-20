@@ -45,7 +45,7 @@ final class ImagesListService {
             return
         }
         
-        print("Fetching profile image with request: \(request)")
+        print("Fetching image list with request: \(request)")
         
         let task = urlSession.objectTask(for: request) { [weak self] (result: Result<[PhotoResult], Error>) in
             guard let self else { return }
@@ -59,7 +59,7 @@ final class ImagesListService {
                     let photos = photoList.map { Photo(from: $0) }
                     self.photos.append(contentsOf: photos)
                     self.lastLoadedPage = (self.lastLoadedPage ?? 0) + 1
-
+                    
                     NotificationCenter.default
                         .post(
                             name: ImagesListService.didChangeNotification,
@@ -74,6 +74,49 @@ final class ImagesListService {
         self.task = task
         task.resume()
         
+    }
+    
+    func changeLike(_ token: String, photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
+        assert(Thread.isMainThread)
+        
+        guard lastToken != token else {
+            print("Fetch already in progress")
+            return
+        }
+        
+        task?.cancel()
+        lastToken = token
+        
+        guard let request = makeChangeLikeRequest(token, photoId, isLike) else {
+            print("Error: Failed to create change like request")
+            return
+        }
+        
+        print("Change like with request: \(request)")
+        
+        let task = urlSession.objectTask(for: request) { [weak self] (result: Result<LikeResponse, Error>) in
+            guard let self else { return }
+            
+            DispatchQueue.main.async {
+                self.task = nil
+                self.lastToken = nil
+                
+                switch result {
+                case .success(_):
+                    completion(.success(()))
+                case .failure(let error):
+                    print("Error during  like changing: \(error)")
+                    completion(.failure(error))
+                }
+            }
+        }
+        self.task = task
+        task.resume()
+        
+    }
+    
+    func cleanPhotos() {
+        photos.removeAll()
     }
     
     // MARK: - Private Methods
@@ -98,6 +141,20 @@ final class ImagesListService {
         var request = URLRequest(url: finalURL)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpMethod = "GET"
+        
+        return request
+    }
+    
+    private func makeChangeLikeRequest(_ token: String, _ photoId: String, _ isLike: Bool) -> URLRequest? {
+        
+        guard let url = URL(string: "\(Constants.defaultBaseURL)/photos/\(photoId)/like") else {
+            print("Error: Invalid URL")
+            return nil
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpMethod = isLike ? "POST" : "DELETE"
         
         return request
     }

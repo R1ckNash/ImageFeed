@@ -71,7 +71,7 @@ final class ImagesListViewController: UIViewController {
         }
     }
     
-    func updateTableViewAnimated() {
+    private func updateTableViewAnimated() {
         let oldCount = photos.count
         let newCount = imagesListService.photos.count
         photos = imagesListService.photos
@@ -100,7 +100,66 @@ final class ImagesListViewController: UIViewController {
             date: dateFormatter.string(from: photo.createdAt)
         )
     }
+    
+    private func updatePhotoList(_ photoId: String) {
+        
+        if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
+            
+            let photo = self.photos[index]
+            
+            let newPhoto = Photo(
+                id: photo.id,
+                size: photo.size,
+                createdAt: photo.createdAt,
+                welcomeDescription: photo.welcomeDescription,
+                thumbImageURL: photo.thumbImageURL,
+                largeImageURL: photo.largeImageURL,
+                regularImageURL: photo.regularImageURL,
+                isLiked: !photo.isLiked)
+            
+            self.photos = self.photos.withReplaced(itemAt: index, newValue: newPhoto)
+        }
+    }
+    
+}
 
+// MARK: - ImagesListCellDelegate
+extension ImagesListViewController: ImagesListCellDelegate {
+    
+    func imageListCellDidTapLike(_ cell: ImagesListCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        let photo = photos[indexPath.row]
+        
+        guard let token = oauth2TokenStorage.token else { return }
+        
+        UIBlockingProgressHUD.show()
+        imagesListService.changeLike(token, photoId: photo.id, isLike: !photo.isLiked) { [weak self] result in
+            guard let self else { return }
+            
+            DispatchQueue.main.async {
+                
+                UIBlockingProgressHUD.dismiss()
+                switch result {
+                    
+                case .success:
+                    self.photos = self.imagesListService.photos
+                    self.updatePhotoList(self.photos[indexPath.row].id)
+                    cell.setIsLiked(self.photos[indexPath.row].isLiked)
+                case .failure(let error):
+                    print("Failed to change like status: \(error.localizedDescription)")
+                    
+                    let alert = UIAlertController(
+                        title: "Error",
+                        message: "Failed to update like status. Please try again later.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+            }
+        }
+    }
+    
 }
 
 // MARK: - UITableViewDataSource
@@ -114,6 +173,7 @@ extension ImagesListViewController: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath) as? ImagesListCell else {
             return UITableViewCell()
         }
+        cell.delegate = self
         configCell(for: cell, with: indexPath)
         return cell
     }

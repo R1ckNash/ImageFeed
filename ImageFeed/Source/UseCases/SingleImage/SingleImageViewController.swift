@@ -49,6 +49,9 @@ final class SingleImageViewController: UIViewController {
         return button
     }()
     
+    // MARK: - Private Properties
+    private var currentImageUrl: URL?
+    
     //MARK: - SingleImageViewController
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,13 +61,17 @@ final class SingleImageViewController: UIViewController {
     
     //MARK: - Public methods
     func setImage(with url: URL) {
+        currentImageUrl = url
+        UIBlockingProgressHUD.show()
         imageView.kf.setImage(with: url) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            
             guard let self else { return }
             switch result {
             case .success(let data):
                 self.rescaleAndCenterImageInScrollView(image: data.image)
             case .failure(let error):
-                print("Error during feyching single photo: \(error.localizedDescription)")
+                self.showError(error)
             }
         }
     }
@@ -106,6 +113,22 @@ final class SingleImageViewController: UIViewController {
             shareButton.widthAnchor.constraint(equalToConstant: 51),
             shareButton.heightAnchor.constraint(equalToConstant: 51)
         ])
+    }
+    
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Error",
+            message: "Failed to set Image. Try again?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Try again", style: .default) { [weak self] _ in
+            guard let self, let currentImageUrl = self.currentImageUrl else { return }
+            self.setImage(with: currentImageUrl)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        self.present(alert, animated: true)
     }
     
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
