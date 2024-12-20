@@ -6,12 +6,11 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class SingleImageViewController: UIViewController {
     
     //MARK: - Visual Components
-    private var image: UIImage?
-    
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -50,22 +49,31 @@ final class SingleImageViewController: UIViewController {
         return button
     }()
     
+    // MARK: - Private Properties
+    private var currentImageUrl: URL?
+    
     //MARK: - SingleImageViewController
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUI()
-        
-        guard let image else { return }
-        imageView.image = image
-        imageView.frame.size = image.size
-        
-        rescaleAndCenterImageInScrollView(image: image)
     }
     
     //MARK: - Public methods
-    func setImage(_ image: UIImage?) {
-        self.image = image
+    func setImage(with url: URL) {
+        currentImageUrl = url
+        UIBlockingProgressHUD.show()
+        imageView.kf.setImage(with: url) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            
+            guard let self else { return }
+            switch result {
+            case .success(let data):
+                self.rescaleAndCenterImageInScrollView(image: data.image)
+            case .failure(let error):
+                self.showError(error)
+            }
+        }
     }
     
     //MARK: - Private Methods
@@ -74,7 +82,7 @@ final class SingleImageViewController: UIViewController {
     }
     
     @objc private func didTapShareButton() {
-        guard let image else { return }
+        guard let image = imageView.image else { return }
         let share = UIActivityViewController(
             activityItems: [image],
             applicationActivities: nil
@@ -105,6 +113,22 @@ final class SingleImageViewController: UIViewController {
             shareButton.widthAnchor.constraint(equalToConstant: 51),
             shareButton.heightAnchor.constraint(equalToConstant: 51)
         ])
+    }
+    
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Error",
+            message: "Failed to set Image. Try again?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Try again", style: .default) { [weak self] _ in
+            guard let self, let currentImageUrl = self.currentImageUrl else { return }
+            self.setImage(with: currentImageUrl)
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        self.present(alert, animated: true)
     }
     
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
