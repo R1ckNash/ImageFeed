@@ -68,7 +68,22 @@ final class ProfileViewController: UIViewController {
     }
     
     @objc private func didTapLogoutButton() {
-        profileLogoutService.logout()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            
+            let alert = UIAlertController(
+                title: "Bye, bye!",
+                message: "Are you sure?",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "No", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Yes", style: .default) { _ in
+                self.profileLogoutService.logout()
+            })
+            
+            self.present(alert, animated: true)
+        }
     }
     
     private func configureUI() {

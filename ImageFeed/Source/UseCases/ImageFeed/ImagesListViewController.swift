@@ -20,12 +20,6 @@ final class ImagesListViewController: UIViewController {
     
     // MARK: - Private Properties
     private var photos: [Photo] = []
-    private lazy var dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .none
-        return formatter
-    }()
     
     private let imagesListService = ImagesListService.shared
     private var imagesListServiceObserver: NSObjectProtocol?
@@ -34,6 +28,7 @@ final class ImagesListViewController: UIViewController {
     // MARK: - ImagesListViewController
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         
         setupTableView()
         observeServiceChanges()
@@ -77,7 +72,7 @@ final class ImagesListViewController: UIViewController {
         photos = imagesListService.photos
         if oldCount != newCount {
             tableView.performBatchUpdates {
-                let indexPaths = (oldCount..<newCount).map { i in
+                let indexPaths = (oldCount ..< newCount).map { i in
                     IndexPath(row: i, section: 0)
                 }
                 tableView.insertRows(at: indexPaths, with: .automatic)
@@ -97,7 +92,7 @@ final class ImagesListViewController: UIViewController {
         cell.configure(
             with: imageURL,
             isLiked: photo.isLiked,
-            date: dateFormatter.string(from: photo.createdAt)
+            date: DateFormatterService.shared.format(photo.createdAt)
         )
     }
     
@@ -143,8 +138,10 @@ extension ImagesListViewController: ImagesListCellDelegate {
                     
                 case .success:
                     self.photos = self.imagesListService.photos
-                    self.updatePhotoList(self.photos[indexPath.row].id)
-                    cell.setIsLiked(self.photos[indexPath.row].isLiked)
+                    if let updatedIndex = self.photos.firstIndex(where: { $0.id == photo.id }) {
+                        let updatedPhoto = self.photos[updatedIndex]
+                        cell.setIsLiked(updatedPhoto.isLiked)
+                    }
                 case .failure(let error):
                     print("Failed to change like status: \(error.localizedDescription)")
                     

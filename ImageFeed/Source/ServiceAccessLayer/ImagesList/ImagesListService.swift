@@ -103,6 +103,11 @@ final class ImagesListService {
                 
                 switch result {
                 case .success(_):
+                    if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
+                        var photo = self.photos[index]
+                        photo.isLiked = isLike
+                        self.photos[index] = photo
+                    }
                     completion(.success(()))
                 case .failure(let error):
                     print("Error during  like changing: \(error)")

@@ -54,11 +54,7 @@ extension URLSession {
     
     func objectTask<T: Decodable>(for request: URLRequest, completion: @escaping (Result<T, Error>) -> Void) -> URLSessionTask {
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .formatted(dateFormatter)
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         
         let task = data(for: request) { (result: Result<Data, Error>) in
