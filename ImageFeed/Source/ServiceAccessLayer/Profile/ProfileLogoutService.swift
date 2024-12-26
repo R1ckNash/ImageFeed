@@ -20,6 +20,10 @@ final class ProfileLogoutService {
     
     private func cleanCookies() {
         
+        OAuth2TokenStorage.shared.cleanStorage()
+        ImagesListService.shared.cleanPhotos()
+        ProfileService.shared.profile = nil
+        
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
         
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
@@ -27,10 +31,6 @@ final class ProfileLogoutService {
             records.forEach { record in
                 WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
             }
-            
-            OAuth2TokenStorage.shared.cleanStorage()
-            ImagesListService.shared.cleanPhotos()
-            ProfileService.shared.profile = nil
         }
     }
     
