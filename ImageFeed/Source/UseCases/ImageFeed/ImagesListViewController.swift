@@ -96,26 +96,6 @@ final class ImagesListViewController: UIViewController {
         )
     }
     
-    private func updatePhotoList(_ photoId: String) {
-        
-        if let index = self.photos.firstIndex(where: { $0.id == photoId }) {
-            
-            let photo = self.photos[index]
-            
-            let newPhoto = Photo(
-                id: photo.id,
-                size: photo.size,
-                createdAt: photo.createdAt,
-                welcomeDescription: photo.welcomeDescription,
-                thumbImageURL: photo.thumbImageURL,
-                largeImageURL: photo.largeImageURL,
-                regularImageURL: photo.regularImageURL,
-                isLiked: !photo.isLiked)
-            
-            self.photos = self.photos.withReplaced(itemAt: index, newValue: newPhoto)
-        }
-    }
-    
 }
 
 // MARK: - ImagesListCellDelegate
