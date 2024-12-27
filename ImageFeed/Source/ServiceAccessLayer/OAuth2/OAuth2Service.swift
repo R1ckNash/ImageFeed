@@ -100,30 +100,3 @@ final class OAuth2Service {
         return request
     }
 }
-
-// MARK: - Network Client
-//extension OAuth2Service {
-//    
-//    private func object(for request: URLRequest,
-//                        completion: @escaping (Result<OAuthTokenResponseBody, Error>) -> Void) -> URLSessionTask {
-//        
-//        return urlSession.data(for: request) { [weak self] (result: Result<Data, Error>) in
-//            guard let self else { return }
-//            
-//            switch result {
-//            case .success(let data):
-//                do {
-//                    let body = try self.decoder.decode(OAuthTokenResponseBody.self, from: data)
-//                    completion(.success(body))
-//                }
-//                catch {
-//                    completion(.failure(NetworkError.decodingError(error)))
-//                }
-//                
-//            case .failure(let error):
-//                completion(.failure(error))
-//            }
-//        }
-//    }
-//    
-//}

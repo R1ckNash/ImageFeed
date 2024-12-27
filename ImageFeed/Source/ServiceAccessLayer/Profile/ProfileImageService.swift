@@ -15,15 +15,12 @@ final class ProfileImageService {
     var avatarURL: String?
      
     //MARK: - Private Properties
-    private let decoder: JSONDecoder
     private let urlSession: URLSession
     private var task: URLSessionTask?
     private var lastToken: String?
     
     // MARK: - Initializers
     private init() {
-        decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
         urlSession = URLSession.shared
     }
     

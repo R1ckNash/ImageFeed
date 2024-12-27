@@ -10,7 +10,7 @@ import SwiftKeychainWrapper
 
 final class OAuth2TokenStorage {
     
-    //MARK: - Public Properties
+    // MARK: - Public Properties
     static let shared = OAuth2TokenStorage()
     
     var token: String? {
@@ -26,8 +26,12 @@ final class OAuth2TokenStorage {
         }
     }
     
-    //MARK: - Private Properties
+    // MARK: - Private Properties
     private let dataStorage = KeychainWrapper.standard
     private let tokenKey = "token"
     
+    // MARK: - Public Methods
+    func cleanStorage() {
+        dataStorage.removeObject(forKey: tokenKey)
+    }
 }
