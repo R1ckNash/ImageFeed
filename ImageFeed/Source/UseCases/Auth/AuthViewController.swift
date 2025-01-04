@@ -30,6 +30,7 @@ final class AuthViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.cornerRadius = 16
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityIdentifier = "Authenticate"
         
         button.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         
@@ -71,10 +72,17 @@ final class AuthViewController: UIViewController {
     }
     
     @objc private func loginButtonTapped () {
-        let webViewController = WebViewViewController()
-        webViewController.delegate = self
-        webViewController.modalPresentationStyle = .fullScreen
-        self.navigationController?.pushViewController(webViewController, animated: true)
+        let webViewViewController = WebViewViewController()
+        webViewViewController.delegate = self
+        
+        let authHelper = AuthHelper()
+        let webViewPresenter = WebViewPresenter(authHelper: authHelper)
+        webViewViewController.presenter = webViewPresenter
+        webViewPresenter.view = webViewViewController
+        webViewViewController.delegate = self
+        
+        webViewViewController.modalPresentationStyle = .fullScreen
+        self.navigationController?.pushViewController(webViewViewController, animated: true)
     }
 
 }

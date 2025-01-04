@@ -29,11 +29,22 @@ final class TabBarController: UITabBarController {
         tabBar.tintColor = .white
         
         let imagesListViewController = ImagesListViewController()
+        let imagesListPresenter = ImagesListPresenter(imagesListService: ImagesListService.shared,
+                                                      tokenStorage: OAuth2TokenStorage.shared)
+        imagesListViewController.presenter = imagesListPresenter
+        imagesListPresenter.view = imagesListViewController
         imagesListViewController.tabBarItem = UITabBarItem(title: "",
                                                            image: UIImage(systemName: "square.stack.fill"),
                                                            selectedImage: nil)
         
         let profileViewController = ProfileViewController()
+        let profileService = ProfileService.shared
+        let profileLogoutService = ProfileLogoutService.shared
+        let profilePresenter = ProfilePresenter(profileService: profileService, logoutService: profileLogoutService, profileImageService: ProfileImageService.shared)
+        profileViewController.presenter = profilePresenter
+        profilePresenter.view = profileViewController
+        
+        
         profileViewController.tabBarItem = UITabBarItem(title: "",
                                                         image: UIImage(systemName: "person.circle.fill"),
                                                         selectedImage: nil
