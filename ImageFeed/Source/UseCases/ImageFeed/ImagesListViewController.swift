@@ -126,6 +126,8 @@ extension ImagesListViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard !CommandLine.arguments.contains("--disable-pagination") else { return }
+        
         if indexPath.row + 1 == presenter.photosCount {
             presenter.fetchNextPageIfNeeded(at: indexPath)
         }
@@ -140,5 +142,6 @@ extension ImagesListViewController: ImagesListCellDelegate {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
         let photo = presenter.photo(at: indexPath.row)
         presenter?.didTapLike(for: photo.id, isLiked: photo.isLiked, cell: cell)
+        print("lol")
     }
 }

@@ -74,7 +74,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
     
     func showLogoutConfirmation() {
         let alert = UIAlertController(
-            title: "Bye, bye!",
+            title: "Bye bye!",
             message: "Are you sure?",
             preferredStyle: .alert
         )
@@ -205,6 +205,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
         logoutButton.setImage(UIImage(imageLiteralResourceName: "logout_button"), for: .normal)
         logoutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
+        logoutButton.accessibilityIdentifier = "logout button"
         
         NSLayoutConstraint.activate([
             logoutButton.heightAnchor.constraint(equalToConstant: 44),
