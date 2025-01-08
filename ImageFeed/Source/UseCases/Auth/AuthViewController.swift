@@ -14,7 +14,8 @@ protocol AuthViewControllerDelegate: AnyObject {
 
 final class AuthViewController: UIViewController {
     
-    //MARK: - Visual Components
+    // MARK: - Visual Components
+    
     private lazy var logoImageView: UIImageView = {
         let imageView = UIImageView(image: .init(named: "unsplash_logo"))
         imageView.contentMode = .scaleAspectFit
@@ -37,20 +38,24 @@ final class AuthViewController: UIViewController {
         return button
     }()
     
-    //MARK: - Public Properties
+    // MARK: - Public Properties
+    
     weak var delegate: AuthViewControllerDelegate?
     
-    //MARK: - Private Properties
+    // MARK: - Private Properties
+    
     private let oauth2Service = OAuth2Service.shared
 
-    //MARK: - Lifecycle
+    // MARK: - Initializers
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         configureUI()
     }
     
-    //MARK: - Private Methods
+    // MARK: - Private Methods
+    
     private func configureUI() {
         view.backgroundColor = .ypBlack
         
@@ -87,7 +92,8 @@ final class AuthViewController: UIViewController {
 
 }
 
-//MARK: - WebViewViewControllerDelegate
+// MARK: - WebViewViewControllerDelegate
+
 extension AuthViewController: WebViewViewControllerDelegate {
     
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {

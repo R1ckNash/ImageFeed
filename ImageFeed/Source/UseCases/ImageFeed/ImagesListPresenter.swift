@@ -13,55 +13,43 @@ protocol ImagesListPresenterProtocol: AnyObject {
     func viewDidLoad()
     func fetchNextPageIfNeeded(at indexPath: IndexPath)
     func didTapLike(for photoId: String, isLiked: Bool, cell: ImagesListCell)
-    func photo(at index: Int) -> Photo
+    func getPhoto(at index: Int) -> Photo
 }
 
 final class ImagesListPresenter: ImagesListPresenterProtocol {
     
+    // MARK: - Public Properties
+    
     weak var view: ImagesListViewControllerProtocol?
+    
+    var photosCount: Int {
+        photos.count
+    }
+    
+    // MARK: - Private Properties
+    
     private let imagesListService: ImagesListServiceProtocol
     private let tokenStorage: OAuth2TokenStorageProtocol
     private var photos: [Photo] = []
-    
     private var imagesListServiceObserver: NSObjectProtocol?
     
-    var photosCount: Int {
-        return photos.count
-    }
-    
-    func photo(at index: Int) -> Photo {
-        return photos[index]
-    }
+    // MARK: - Initializers
     
     init(imagesListService: ImagesListServiceProtocol, tokenStorage: OAuth2TokenStorageProtocol) {
         self.imagesListService = imagesListService
         self.tokenStorage = tokenStorage
     }
     
+    // MARK: - Public Properties
+    
+    func getPhoto(at index: Int) -> Photo {
+        photos[index]
+    }
+    
     func viewDidLoad() {
         observeServiceChanges()
         if let token = tokenStorage.token {
             imagesListService.fetchPhotosNextPage(token)
-        }
-    }
-    
-    private func observeServiceChanges() {
-        imagesListServiceObserver = NotificationCenter.default.addObserver(
-            forName: ImagesListService.didChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.updateTableViewAnimated()
-        }
-    }
-    
-    private func updateTableViewAnimated() {
-        let oldCount = photos.count
-        let newCount = imagesListService.photos.count
-        photos = imagesListService.photos
-        
-        if oldCount != newCount {
-            view?.updateTableViewAnimated(oldCount, newCount)
         }
     }
     
@@ -92,4 +80,27 @@ final class ImagesListPresenter: ImagesListPresenterProtocol {
             }
         }
     }
+    
+    // MARK: - Private Properties
+    
+    private func observeServiceChanges() {
+        imagesListServiceObserver = NotificationCenter.default.addObserver(
+            forName: ImagesListService.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.updateTableViewAnimated()
+        }
+    }
+    
+    private func updateTableViewAnimated() {
+        let oldCount = photos.count
+        let newCount = imagesListService.photos.count
+        photos = imagesListService.photos
+        
+        if oldCount != newCount {
+            view?.updateTableViewAnimated(oldCount, newCount)
+        }
+    }
+    
 }

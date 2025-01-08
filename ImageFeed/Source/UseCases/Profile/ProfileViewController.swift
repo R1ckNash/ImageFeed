@@ -31,7 +31,7 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
     // MARK: - Public Properties
     var presenter: ProfilePresenterProtocol?
     
-    // MARK: - ProfileViewController
+    // MARK: - Public Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -51,8 +51,6 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         presenter?.updateAvatar()
     }
     
-    // MARK: - Private Methods
-    
     func updateAvatar(imageURL: URL?) {
         animationLayers.removeAll()
         guard let url = imageURL else { return }
@@ -66,10 +64,6 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         nameLabel.text = name
         loginNameLabel.text = loginName
         descriptionLabel.text = bio
-    }
-    
-    @objc private func didTapLogoutButton() {
-        presenter?.didTapLogout()
     }
     
     func showLogoutConfirmation() {
@@ -95,6 +89,11 @@ final class ProfileViewController: UIViewController, ProfileViewControllerProtoc
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    // MARK: - Private Methods
+    @objc private func didTapLogoutButton() {
+        presenter?.didTapLogout()
     }
     
     private func configureUI() {

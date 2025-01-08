@@ -18,15 +18,17 @@ final class ImageFeedUITests: XCTestCase {
     }
     
     func testAuth() {
+        sleep(5)
         
-        app.buttons["Authenticate"].tap()
+        let button = app.buttons["Authenticate"]
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        button.tap()
         
         let webView = app.webViews["UnsplashWebView"]
-        
         XCTAssertTrue(webView.waitForExistence(timeout: 5))
         
         let loginTextField = webView.descendants(matching: .textField).element
-        XCTAssertTrue(loginTextField.waitForExistence(timeout: 5))
+        XCTAssertTrue(loginTextField.waitForExistence(timeout: 10))
         
         loginTextField.tap()
         loginTextField.typeText("")
@@ -36,8 +38,9 @@ final class ImageFeedUITests: XCTestCase {
         XCTAssertTrue(passwordTextField.waitForExistence(timeout: 10))
         
         passwordTextField.tap()
+        sleep(3)
         passwordTextField.typeText("")
-        sleep(5)
+        sleep(3)
         webView.swipeUp()
         
         webView.buttons["Login"].tap()
@@ -49,7 +52,6 @@ final class ImageFeedUITests: XCTestCase {
     }
     
     func testFeed() throws {
-        
         let tablesQuery = app.tables
         
         sleep(5)

@@ -16,14 +16,16 @@ final class ImagesListServiceMock: ImagesListServiceProtocol {
         didFetchPhotosNextPage = true
     }
     
-    func changeLike(_ token: String, photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
+    func changeLike(_ token: String,
+                    photoId: String,
+                    isLike: Bool,
+                    _ completion: @escaping (Result<Void, Error>) -> Void) {
         completion(.success(()))
     }
 }
 
 final class OAuth2TokenStorageMock: OAuth2TokenStorageProtocol {
-    func cleanStorage() {
-    }
+    func cleanStorage() {}
     
     var token: String? = "mockToken"
 }
@@ -45,51 +47,51 @@ final class ImagesListViewControllerMock: ImagesListViewControllerProtocol {
 
 final class ImageListViewTests: XCTestCase {
     var presenter: ImagesListPresenter!
-        var viewMock: ImagesListViewControllerMock!
-        var serviceMock: ImagesListServiceMock!
-        var tokenStorageMock: OAuth2TokenStorageMock!
+    var viewMock: ImagesListViewControllerMock!
+    var serviceMock: ImagesListServiceMock!
+    var tokenStorageMock: OAuth2TokenStorageMock!
+    
+    override func setUp() {
+        super.setUp()
+        serviceMock = ImagesListServiceMock()
+        tokenStorageMock = OAuth2TokenStorageMock()
+        viewMock = ImagesListViewControllerMock()
+        presenter = ImagesListPresenter(imagesListService: serviceMock, tokenStorage: tokenStorageMock)
+        presenter.view = viewMock
+    }
+    
+    override func tearDown() {
+        presenter = nil
+        viewMock = nil
+        serviceMock = nil
+        tokenStorageMock = nil
+        super.tearDown()
+    }
+    
+    func testViewDidLoadFetchesPhotos() {
+        presenter.viewDidLoad()
+        XCTAssertTrue(serviceMock.didFetchPhotosNextPage)
+    }
+    
+    func testUpdateTableViewAnimatedCalledWhenPhotosChange() {
+        let initialPhotos = [Photo(id: "1", size: .zero, createdAt: nil, welcomeDescription: "", thumbImageURL: "", largeImageURL: "", regularImageURL: "", isLiked: false)]
+        serviceMock.photos = initialPhotos
+        presenter.viewDidLoad()
         
-        override func setUp() {
-            super.setUp()
-            serviceMock = ImagesListServiceMock()
-            tokenStorageMock = OAuth2TokenStorageMock()
-            viewMock = ImagesListViewControllerMock()
-            presenter = ImagesListPresenter(imagesListService: serviceMock, tokenStorage: tokenStorageMock)
-            presenter.view = viewMock
-        }
+        let newPhotos = [
+            Photo(id: "1", size: .zero, createdAt: nil, welcomeDescription: "", thumbImageURL: "", largeImageURL: "", regularImageURL: "", isLiked: false),
+            Photo(id: "2", size: .zero, createdAt: nil, welcomeDescription: "", thumbImageURL: "", largeImageURL: "", regularImageURL: "", isLiked: false)
+        ]
+        serviceMock.photos = newPhotos
         
-        override func tearDown() {
-            presenter = nil
-            viewMock = nil
-            serviceMock = nil
-            tokenStorageMock = nil
-            super.tearDown()
-        }
+        NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
         
-        func testViewDidLoadFetchesPhotos() {
-            presenter.viewDidLoad()
-            XCTAssertTrue(serviceMock.didFetchPhotosNextPage)
-        }
-        
-        func testUpdateTableViewAnimatedCalledWhenPhotosChange() {
-            let initialPhotos = [Photo(id: "1", size: .zero, createdAt: nil, welcomeDescription: "", thumbImageURL: "", largeImageURL: "", regularImageURL: "", isLiked: false)]
-            serviceMock.photos = initialPhotos
-            presenter.viewDidLoad()
-            
-            let newPhotos = [
-                Photo(id: "1", size: .zero, createdAt: nil, welcomeDescription: "", thumbImageURL: "", largeImageURL: "", regularImageURL: "", isLiked: false),
-                Photo(id: "2", size: .zero, createdAt: nil, welcomeDescription: "", thumbImageURL: "", largeImageURL: "", regularImageURL: "", isLiked: false)
-            ]
-            serviceMock.photos = newPhotos
-            
-            NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
-            
-            XCTAssertTrue(viewMock.didUpdateTableViewAnimated)
-        }
-        
-        func testFetchNextPageIfNeededCallsFetchPhotosNextPage() {
-            presenter.fetchNextPageIfNeeded(at: IndexPath(row: 0, section: 0))
-            XCTAssertTrue(serviceMock.didFetchPhotosNextPage)
-        }
-
+        XCTAssertTrue(viewMock.didUpdateTableViewAnimated)
+    }
+    
+    func testFetchNextPageIfNeededCallsFetchPhotosNextPage() {
+        presenter.fetchNextPageIfNeeded(at: IndexPath(row: 0, section: 0))
+        XCTAssertTrue(serviceMock.didFetchPhotosNextPage)
+    }
+    
 }

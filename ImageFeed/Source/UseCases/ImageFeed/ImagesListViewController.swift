@@ -14,6 +14,8 @@ protocol ImagesListViewControllerProtocol: AnyObject {
 
 final class ImagesListViewController: UIViewController, ImagesListViewControllerProtocol {
     
+    // MARK: - UI Components
+    
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.backgroundColor = .ypBlack
@@ -21,29 +23,19 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
         return tableView
     }()
     
-    var presenter: ImagesListPresenterProtocol!
+    // MARK: - Public Properties
+    
+    var presenter: ImagesListPresenterProtocol?
+    
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupTableView()
-        presenter.viewDidLoad()
+        presenter?.viewDidLoad()
     }
     
-    private func setupTableView() {
-        view.addSubview(tableView)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        
-        tableView.register(ImagesListCell.self, forCellReuseIdentifier: ImagesListCell.reuseIdentifier)
-        tableView.dataSource = self
-        tableView.delegate = self
-    }
+    // MARK: - Public Properties
     
     func updateTableViewAnimated(_ oldCount: Int, _ newCount: Int) {
         if oldCount != newCount {
@@ -62,9 +54,32 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
         present(alert, animated: true)
     }
     
+    // MARK: - Private Properties
+    
+    private func setupTableView() {
+        view.addSubview(tableView)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        tableView.register(ImagesListCell.self, forCellReuseIdentifier: ImagesListCell.reuseIdentifier)
+        tableView.dataSource = self
+        tableView.delegate = self
+    }
+    
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let photo = presenter.photo(at: indexPath.row)
+        let photo = presenter?.getPhoto(at: indexPath.row)
         cell.prepareForReuse()
+        
+        guard let photo else {
+            print("Error: No photo")
+            return
+        }
         
         guard let imageURL = URL(string: photo.regularImageURL) else {
             print("Error: Invalid image URL \(photo.regularImageURL)")
@@ -81,10 +96,11 @@ final class ImagesListViewController: UIViewController, ImagesListViewController
 }
 
 // MARK: - UITableViewDataSource
+
 extension ImagesListViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        presenter.photosCount
+        presenter?.photosCount ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -98,10 +114,16 @@ extension ImagesListViewController: UITableViewDataSource {
     
 }
 // MARK: - UITableViewDelegate
+
 extension ImagesListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let photo = presenter.photo(at: indexPath.row)
+        let photo = presenter?.getPhoto(at: indexPath.row)
+        
+        guard let photo else {
+            print("Error: No photo")
+            return CGFloat.zero
+        }
         
         let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
         let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
@@ -112,7 +134,12 @@ extension ImagesListViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let photo = presenter.photo(at: indexPath.row)
+        let photo = presenter?.getPhoto(at: indexPath.row)
+        
+        guard let photo else {
+            print("Error: No photo")
+            return
+        }
         
         guard let imageURL = URL(string: photo.largeImageURL) else {
             print("Error: Invalid image URL \(photo.largeImageURL)")
@@ -128,20 +155,26 @@ extension ImagesListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         guard !CommandLine.arguments.contains("--disable-pagination") else { return }
         
-        if indexPath.row + 1 == presenter.photosCount {
-            presenter.fetchNextPageIfNeeded(at: indexPath)
+        if indexPath.row + 1 == presenter?.photosCount {
+            presenter?.fetchNextPageIfNeeded(at: indexPath)
         }
     }
 }
 
 
 // MARK: - ImagesListCellDelegate
+
 extension ImagesListViewController: ImagesListCellDelegate {
     
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
-        let photo = presenter.photo(at: indexPath.row)
+        let photo = presenter?.getPhoto(at: indexPath.row)
+        
+        guard let photo else {
+            print("Error: No photo")
+            return
+        }
+        
         presenter?.didTapLike(for: photo.id, isLiked: photo.isLiked, cell: cell)
-        print("lol")
     }
 }
