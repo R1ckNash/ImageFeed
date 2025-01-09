@@ -33,7 +33,7 @@ final class OAuth2TokenStorage: OAuth2TokenStorageProtocol {
     
     // MARK: - Private Properties
     private let dataStorage = KeychainWrapper.standard
-    private let tokenKey = "token88"
+    private let tokenKey = "token"
     
     // MARK: - Public Methods
     func cleanStorage() {
