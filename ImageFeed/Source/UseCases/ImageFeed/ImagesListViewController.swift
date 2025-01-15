@@ -7,40 +7,56 @@
 
 import UIKit
 
-final class ImagesListViewController: UIViewController {
+protocol ImagesListViewControllerProtocol: AnyObject {
+    func updateTableViewAnimated(_ oldCount: Int, _ newCount: Int)
+    func showError(_ message: String)
+}
+
+final class ImagesListViewController: UIViewController, ImagesListViewControllerProtocol {
     
-    // MARK: - Visual Components
+    // MARK: - UI Components
+    
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
         tableView.backgroundColor = .ypBlack
         tableView.separatorStyle = .none
-        
         return tableView
     }()
     
-    // MARK: - Private Properties
-    private var photos: [Photo] = []
+    // MARK: - Public Properties
     
-    private let imagesListService = ImagesListService.shared
-    private var imagesListServiceObserver: NSObjectProtocol?
-    private let oauth2TokenStorage = OAuth2TokenStorage()
+    var presenter: ImagesListPresenterProtocol?
     
-    // MARK: - ImagesListViewController
+    // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        
         setupTableView()
-        observeServiceChanges()
-        
-        if let token = oauth2TokenStorage.token {
-            imagesListService.fetchPhotosNextPage(token)
+        presenter?.viewDidLoad()
+    }
+    
+    // MARK: - Public Properties
+    
+    func updateTableViewAnimated(_ oldCount: Int, _ newCount: Int) {
+        if oldCount != newCount {
+            tableView.performBatchUpdates {
+                let indexPaths = (oldCount ..< newCount).map { i in
+                    IndexPath(row: i, section: 0)
+                }
+                tableView.insertRows(at: indexPaths, with: .automatic)
+            } completion: { _ in }
         }
     }
     
-    // MARK: - Private Methods
+    func showError(_ message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    // MARK: - Private Properties
+    
     private func setupTableView() {
-        
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -56,33 +72,14 @@ final class ImagesListViewController: UIViewController {
         tableView.delegate = self
     }
     
-    private func observeServiceChanges() {
-        imagesListServiceObserver = NotificationCenter.default.addObserver(
-            forName: ImagesListService.didChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.updateTableViewAnimated()
-        }
-    }
-    
-    private func updateTableViewAnimated() {
-        let oldCount = photos.count
-        let newCount = imagesListService.photos.count
-        photos = imagesListService.photos
-        if oldCount != newCount {
-            tableView.performBatchUpdates {
-                let indexPaths = (oldCount ..< newCount).map { i in
-                    IndexPath(row: i, section: 0)
-                }
-                tableView.insertRows(at: indexPaths, with: .automatic)
-            } completion: { _ in }
-        }
-    }
-    
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let photo = photos[indexPath.row]
+        let photo = presenter?.getPhoto(at: indexPath.row)
         cell.prepareForReuse()
+        
+        guard let photo else {
+            print("Error: No photo")
+            return
+        }
         
         guard let imageURL = URL(string: photo.regularImageURL) else {
             print("Error: Invalid image URL \(photo.regularImageURL)")
@@ -98,52 +95,12 @@ final class ImagesListViewController: UIViewController {
     
 }
 
-// MARK: - ImagesListCellDelegate
-extension ImagesListViewController: ImagesListCellDelegate {
-    
-    func imageListCellDidTapLike(_ cell: ImagesListCell) {
-        guard let indexPath = tableView.indexPath(for: cell) else { return }
-        let photo = photos[indexPath.row]
-        
-        guard let token = oauth2TokenStorage.token else { return }
-        
-        UIBlockingProgressHUD.show()
-        imagesListService.changeLike(token, photoId: photo.id, isLike: !photo.isLiked) { [weak self] result in
-            guard let self else { return }
-            
-            DispatchQueue.main.async {
-                
-                UIBlockingProgressHUD.dismiss()
-                switch result {
-                    
-                case .success:
-                    self.photos = self.imagesListService.photos
-                    if let updatedIndex = self.photos.firstIndex(where: { $0.id == photo.id }) {
-                        let updatedPhoto = self.photos[updatedIndex]
-                        cell.setIsLiked(updatedPhoto.isLiked)
-                    }
-                case .failure(let error):
-                    print("Failed to change like status: \(error.localizedDescription)")
-                    
-                    let alert = UIAlertController(
-                        title: "Error",
-                        message: "Failed to update like status. Please try again later.",
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(alert, animated: true)
-                }
-            }
-        }
-    }
-    
-}
-
 // MARK: - UITableViewDataSource
+
 extension ImagesListViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        photos.count
+        presenter?.photosCount ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -157,10 +114,16 @@ extension ImagesListViewController: UITableViewDataSource {
     
 }
 // MARK: - UITableViewDelegate
+
 extension ImagesListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let photo = photos[indexPath.row]
+        let photo = presenter?.getPhoto(at: indexPath.row)
+        
+        guard let photo else {
+            print("Error: No photo")
+            return CGFloat.zero
+        }
         
         let imageInsets = UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16)
         let imageViewWidth = tableView.bounds.width - imageInsets.left - imageInsets.right
@@ -171,7 +134,12 @@ extension ImagesListViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let photo = photos[indexPath.row]
+        let photo = presenter?.getPhoto(at: indexPath.row)
+        
+        guard let photo else {
+            print("Error: No photo")
+            return
+        }
         
         guard let imageURL = URL(string: photo.largeImageURL) else {
             print("Error: Invalid image URL \(photo.largeImageURL)")
@@ -185,10 +153,28 @@ extension ImagesListViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if indexPath.row + 1 == photos.count {
-            if let token = oauth2TokenStorage.token {
-                imagesListService.fetchPhotosNextPage(token)
-            }
+        guard !CommandLine.arguments.contains("--disable-pagination") else { return }
+        
+        if indexPath.row + 1 == presenter?.photosCount {
+            presenter?.fetchNextPageIfNeeded(at: indexPath)
         }
+    }
+}
+
+
+// MARK: - ImagesListCellDelegate
+
+extension ImagesListViewController: ImagesListCellDelegate {
+    
+    func imageListCellDidTapLike(_ cell: ImagesListCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        let photo = presenter?.getPhoto(at: indexPath.row)
+        
+        guard let photo else {
+            print("Error: No photo")
+            return
+        }
+        
+        presenter?.didTapLike(for: photo.id, isLiked: photo.isLiked, cell: cell)
     }
 }

@@ -35,6 +35,7 @@ final class SingleImageViewController: UIViewController {
         button.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
         button.tintColor = .white
         button.addTarget(self, action: #selector(didTapBackButton), for: .touchUpInside)
+        button.accessibilityIdentifier = "back_button"
         
         return button
     }()

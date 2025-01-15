@@ -8,7 +8,14 @@
 import UIKit
 import Kingfisher
 
-final class ProfileViewController: UIViewController {
+protocol ProfileViewControllerProtocol: AnyObject {
+    func updateProfileDetails(name: String, loginName: String, bio: String?)
+    func updateAvatar(imageURL: URL?)
+    func showLogoutConfirmation()
+    func showError(message: String)
+}
+
+final class ProfileViewController: UIViewController, ProfileViewControllerProtocol {
     
     // MARK: - Visual Components
     private let avatarImageView = UIImageView()
@@ -18,17 +25,18 @@ final class ProfileViewController: UIViewController {
     private let logoutButton = UIButton()
     
     // MARK: - Private Properties
-    private let profileService = ProfileService.shared
-    private let profileLogoutService = ProfileLogoutService.shared
     private var profileImageServiceObserver: NSObjectProtocol?
     private var animationLayers = Set<CALayer>()
     
-    // MARK: - ProfileViewController
+    // MARK: - Public Properties
+    var presenter: ProfilePresenterProtocol?
+    
+    // MARK: - Public Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         
         configureUI()
-        updateProfileDetails()
+        presenter?.updateProfileDetails()
         
         profileImageServiceObserver = NotificationCenter.default
             .addObserver(
@@ -37,53 +45,55 @@ final class ProfileViewController: UIViewController {
                 queue: .main
             ) { [weak self] _ in
                 guard let self = self else { return }
-                self.updateAvatar()
+                self.presenter?.updateAvatar()
             }
-        updateAvatar()
+        
+        presenter?.updateAvatar()
     }
     
-    // MARK: - Private Methods
-    private func updateAvatar() {
+    func updateAvatar(imageURL: URL?) {
         animationLayers.removeAll()
-        
-        guard let profileImageURL = ProfileImageService.shared.avatarURL,
-              let url = URL(string: profileImageURL) else {
-            return
-        }
+        guard let url = imageURL else { return }
         let processor = RoundCornerImageProcessor(cornerRadius: 20)
         avatarImageView.kf.setImage(with: url, placeholder: UIImage(named: "Photo"),
                                     options: [.processor(processor)])
     }
     
-    private func updateProfileDetails() {
+    func updateProfileDetails(name: String, loginName: String, bio: String?) {
         removeAnimations()
-        guard let profile = profileService.profile else {
-            configureUIWithAnimations()
-            return
-        }
-        
-        nameLabel.text = profile.name
-        loginNameLabel.text = profile.loginName
-        descriptionLabel.text = profile.bio
+        nameLabel.text = name
+        loginNameLabel.text = loginName
+        descriptionLabel.text = bio
     }
     
+    func showLogoutConfirmation() {
+        let alert = UIAlertController(
+            title: "Bye bye!",
+            message: "Are you sure?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "No", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Yes", style: .default) { [weak self] _ in
+            self?.presenter?.didConfirmLogout()
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    func showError(message: String) {
+        let alert = UIAlertController(
+            title: "Error",
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    // MARK: - Private Methods
     @objc private func didTapLogoutButton() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            
-            let alert = UIAlertController(
-                title: "Bye, bye!",
-                message: "Are you sure?",
-                preferredStyle: .alert
-            )
-            
-            alert.addAction(UIAlertAction(title: "No", style: .cancel))
-            alert.addAction(UIAlertAction(title: "Yes", style: .default) { _ in
-                self.profileLogoutService.logout()
-            })
-            
-            self.present(alert, animated: true)
-        }
+        presenter?.didTapLogout()
     }
     
     private func configureUI() {
@@ -194,6 +204,7 @@ final class ProfileViewController: UIViewController {
         logoutButton.translatesAutoresizingMaskIntoConstraints = false
         logoutButton.setImage(UIImage(imageLiteralResourceName: "logout_button"), for: .normal)
         logoutButton.addTarget(self, action: #selector(didTapLogoutButton), for: .touchUpInside)
+        logoutButton.accessibilityIdentifier = "logout button"
         
         NSLayoutConstraint.activate([
             logoutButton.heightAnchor.constraint(equalToConstant: 44),

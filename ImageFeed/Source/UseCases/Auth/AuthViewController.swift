@@ -14,7 +14,8 @@ protocol AuthViewControllerDelegate: AnyObject {
 
 final class AuthViewController: UIViewController {
     
-    //MARK: - Visual Components
+    // MARK: - Visual Components
+    
     private lazy var logoImageView: UIImageView = {
         let imageView = UIImageView(image: .init(named: "unsplash_logo"))
         imageView.contentMode = .scaleAspectFit
@@ -30,26 +31,31 @@ final class AuthViewController: UIViewController {
         button.backgroundColor = .white
         button.layer.cornerRadius = 16
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityIdentifier = "Authenticate"
         
         button.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         
         return button
     }()
     
-    //MARK: - Public Properties
+    // MARK: - Public Properties
+    
     weak var delegate: AuthViewControllerDelegate?
     
-    //MARK: - Private Properties
+    // MARK: - Private Properties
+    
     private let oauth2Service = OAuth2Service.shared
 
-    //MARK: - Lifecycle
+    // MARK: - Initializers
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         configureUI()
     }
     
-    //MARK: - Private Methods
+    // MARK: - Private Methods
+    
     private func configureUI() {
         view.backgroundColor = .ypBlack
         
@@ -71,15 +77,23 @@ final class AuthViewController: UIViewController {
     }
     
     @objc private func loginButtonTapped () {
-        let webViewController = WebViewViewController()
-        webViewController.delegate = self
-        webViewController.modalPresentationStyle = .fullScreen
-        self.navigationController?.pushViewController(webViewController, animated: true)
+        let webViewViewController = WebViewViewController()
+        webViewViewController.delegate = self
+        
+        let authHelper = AuthHelper()
+        let webViewPresenter = WebViewPresenter(authHelper: authHelper)
+        webViewViewController.presenter = webViewPresenter
+        webViewPresenter.view = webViewViewController
+        webViewViewController.delegate = self
+        
+        webViewViewController.modalPresentationStyle = .fullScreen
+        self.navigationController?.pushViewController(webViewViewController, animated: true)
     }
 
 }
 
-//MARK: - WebViewViewControllerDelegate
+// MARK: - WebViewViewControllerDelegate
+
 extension AuthViewController: WebViewViewControllerDelegate {
     
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {

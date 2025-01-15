@@ -8,7 +8,12 @@
 import Foundation
 import SwiftKeychainWrapper
 
-final class OAuth2TokenStorage {
+protocol OAuth2TokenStorageProtocol {
+    var token: String? { get set }
+    func cleanStorage()
+}
+
+final class OAuth2TokenStorage: OAuth2TokenStorageProtocol {
     
     // MARK: - Public Properties
     static let shared = OAuth2TokenStorage()
